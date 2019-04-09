@@ -35,20 +35,20 @@ type Pipeline struct {
 }
 
 type Operator struct {
-	Id          int    `json:"Id,omitempty"`
-	Name        string `json:"Name,omitempty"`
-	ImageId     string `json:"ImageId,omitempty"`
-	InputTopics []InputTopic
+	Id          string       `json:"id,omitempty"`
+	Name        string       `json:"name,omitempty"`
+	ImageId     string       `json:"imageId,omitempty"`
+	InputTopics []InputTopic `json:"inputTopics,omitempty"`
 }
 
 type InputTopic struct {
-	Name        string
-	FilterType  string
-	FilterValue string
-	Mappings    []Mapping
+	Name        string    `json:"name,omitempty"`
+	FilterType  string    `json:"filterType,omitempty"`
+	FilterValue string    `json:"filterValue,omitempty"`
+	Mappings    []Mapping `json:"mappings,omitempty"`
 }
 
 type Mapping struct {
-	Dest   string
-	Source string
+	Dest   string `json:"dest,omitempty"`
+	Source string `json:"source,omitempty"`
 }
