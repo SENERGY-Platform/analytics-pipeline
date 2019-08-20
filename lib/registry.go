@@ -17,6 +17,7 @@
 package lib
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/satori/go.uuid"
@@ -52,6 +53,9 @@ func (r *Registry) GetPipeline(id string, userId string) (pipeline Pipeline) {
 }
 
 func (r *Registry) DeletePipeline(id string, userId string) Response {
-	r.repository.DeletePipeline(id, userId)
+	err := r.repository.DeletePipeline(id, userId)
+	if err != nil {
+		fmt.Println("Could not delete pipeline record: " + err.Error())
+	}
 	return Response{"OK"}
 }

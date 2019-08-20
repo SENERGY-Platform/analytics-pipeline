@@ -12,7 +12,7 @@ type PipelineRepository interface {
 	InsertPipeline(pipeline Pipeline)
 	All(userId string, args map[string][]string) (pipelines []Pipeline)
 	FindPipeline(id string, userId string) (pipeline Pipeline)
-	DeletePipeline(id string, userId string)
+	DeletePipeline(id string, userId string) (err error)
 }
 
 type MongoRepo struct {
@@ -67,16 +67,17 @@ func (r *MongoRepo) FindPipeline(id string, userId string) (pipeline Pipeline) {
 	return
 }
 
-func (r *MongoRepo) DeletePipeline(id string, userId string) {
+func (r *MongoRepo) DeletePipeline(id string, userId string) (err error) {
 	var pipeline Pipeline
-	err := Mongo().Find(bson.M{"id": id, "userid": userId}).One(&pipeline)
+	err = Mongo().Find(bson.M{"id": id, "userid": userId}).One(&pipeline)
 	if err != nil {
-		fmt.Println(err)
+		return
 	}
 	err = Mongo().Remove(&pipeline)
 	if err != nil {
-		fmt.Println(err)
+		return
 	}
+	return
 }
 
 type MockRepo struct {
@@ -98,6 +99,6 @@ func (r *MockRepo) FindPipeline(id string, userId string) (pipeline Pipeline) {
 	return
 }
 
-func (r *MockRepo) DeletePipeline(id string, userId string) {
-
+func (r *MockRepo) DeletePipeline(id string, userId string) (err error) {
+	return
 }
