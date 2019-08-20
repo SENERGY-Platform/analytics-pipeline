@@ -55,7 +55,7 @@ func GetPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	err := json.NewEncoder(w).Encode(getPipeline(vars["id"], getUserId(req)))
+	err := json.NewEncoder(w).Encode(REGISTRY.GetPipeline(vars["id"], getUserId(req)))
 	if err != nil {
 		fmt.Println("Could not encode response data." + err.Error())
 	}
@@ -65,7 +65,7 @@ func DeletePipelineEndpoint(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	err := json.NewEncoder(w).Encode(deletePipeline(vars["id"], getUserId(req)))
+	err := json.NewEncoder(w).Encode(REGISTRY.DeletePipeline(vars["id"], getUserId(req)))
 	if err != nil {
 		fmt.Println("Could not encode response data." + err.Error())
 	}

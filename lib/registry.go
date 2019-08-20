@@ -46,12 +46,12 @@ func (r *Registry) GetPipelines(userId string, args map[string][]string) (pipeli
 	return
 }
 
-func (r *Registry) getPipeline(id string, userId string) (pipeline Pipeline) {
+func (r *Registry) GetPipeline(id string, userId string) (pipeline Pipeline) {
 	pipeline = r.repository.FindPipeline(id, userId)
 	return
 }
 
-func (r *Registry) deletePipeline(id string, userId string) Response {
+func (r *Registry) DeletePipeline(id string, userId string) Response {
 	r.repository.DeletePipeline(id, userId)
 	return Response{"OK"}
 }
