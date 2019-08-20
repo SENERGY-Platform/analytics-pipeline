@@ -17,6 +17,8 @@
 package lib
 
 import (
+	"time"
+
 	"github.com/satori/go.uuid"
 )
 
@@ -29,9 +31,13 @@ type PipelineResponse struct {
 }
 
 type Pipeline struct {
-	Id        string `bson:"id" json:"id"`
-	UserId    string
-	Operators []Operator `json:"operators,omitempty"`
+	Id          string    `bson:"id" json:"id"`
+	Name        string    `json:"name,omitempty"`
+	Description string    `json:"description,omitempty"`
+	CreatedAt   time.Time `json:"createdAt,omitempty"`
+	UpdatedAt   time.Time `json:"updatedAt,omitempty"`
+	UserId      string
+	Operators   []Operator `json:"operators,omitempty"`
 }
 
 type Operator struct {
