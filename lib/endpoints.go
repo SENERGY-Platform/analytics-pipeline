@@ -24,51 +24,61 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Endpoint struct {
-}
+var REGISTRY = NewRegistry(NewMongoRepo())
 
-func NewEndpoint() *Endpoint {
-	return &Endpoint{}
-}
-
-func (e *Endpoint) getRootEndpoint(w http.ResponseWriter, req *http.Request) {
+func GetRootEndpoint(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(Response{"OK"})
+	err := json.NewEncoder(w).Encode(Response{"OK"})
+	if err != nil {
+		fmt.Println("Could not encode response data." + err.Error())
+	}
 }
 
-func (e *Endpoint) postPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
+func PostPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	var pipeReq Pipeline
 	err := decoder.Decode(&pipeReq)
 	if err != nil {
 		fmt.Println("Could not decode Pipeline Request data." + err.Error())
 	}
-	uuid := savePipeline(pipeReq, getUserId(req))
+	uuid := REGISTRY.SavePipeline(pipeReq, getUserId(req))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(PipelineResponse{uuid})
+	err = json.NewEncoder(w).Encode(PipelineResponse{uuid})
+	if err != nil {
+		fmt.Println("Could not encode response data." + err.Error())
+	}
 }
 
-func (e *Endpoint) getPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
+func GetPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(getPipeline(vars["id"], getUserId(req)))
+	err := json.NewEncoder(w).Encode(getPipeline(vars["id"], getUserId(req)))
+	if err != nil {
+		fmt.Println("Could not encode response data." + err.Error())
+	}
 }
 
-func (e *Endpoint) deletePipelineEndpoint(w http.ResponseWriter, req *http.Request) {
+func DeletePipelineEndpoint(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(deletePipeline(vars["id"], getUserId(req)))
+	err := json.NewEncoder(w).Encode(deletePipeline(vars["id"], getUserId(req)))
+	if err != nil {
+		fmt.Println("Could not encode response data." + err.Error())
+	}
 }
 
-func (e *Endpoint) getPipelinesEndpoint(w http.ResponseWriter, req *http.Request) {
+func GetPipelinesEndpoint(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	args := req.URL.Query()
-	json.NewEncoder(w).Encode(getPipelines(getUserId(req), args))
+	err := json.NewEncoder(w).Encode(REGISTRY.GetPipelines(getUserId(req), args))
+	if err != nil {
+		fmt.Println("Could not encode response data." + err.Error())
+	}
 }
 
 func getUserId(req *http.Request) (userId string) {

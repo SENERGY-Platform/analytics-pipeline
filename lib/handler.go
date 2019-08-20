@@ -29,12 +29,11 @@ func CreateServer() {
 	port := GetEnv("API_PORT", "8000")
 	fmt.Print("Starting Server at port " + port + "\n")
 	router := mux.NewRouter()
-	e := NewEndpoint()
-	router.HandleFunc("/", e.getRootEndpoint).Methods("GET")
-	router.HandleFunc("/pipeline", e.postPipelineEndpoint).Methods("POST")
-	router.HandleFunc("/pipeline/{id}", e.getPipelineEndpoint).Methods("GET")
-	router.HandleFunc("/pipeline/{id}", e.deletePipelineEndpoint).Methods("DELETE")
-	router.HandleFunc("/pipeline", e.getPipelinesEndpoint).Methods("GET")
+	router.HandleFunc("/", GetRootEndpoint).Methods("GET")
+	router.HandleFunc("/pipeline", PostPipelineEndpoint).Methods("POST")
+	router.HandleFunc("/pipeline/{id}", GetPipelineEndpoint).Methods("GET")
+	router.HandleFunc("/pipeline/{id}", DeletePipelineEndpoint).Methods("DELETE")
+	router.HandleFunc("/pipeline", GetPipelinesEndpoint).Methods("GET")
 	c := cors.New(
 		cors.Options{
 			AllowedHeaders: []string{"Content-Type", "Authorization"},
