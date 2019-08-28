@@ -41,11 +41,12 @@ type Pipeline struct {
 }
 
 type Operator struct {
-	Id          string       `json:"id,omitempty"`
-	Name        string       `json:"name,omitempty"`
-	ImageId     string       `json:"imageId,omitempty"`
-	OperatorId  string       `json:"operatorId,omitempty"`
-	InputTopics []InputTopic `json:"inputTopics,omitempty"`
+	Id             string       `json:"id,omitempty"`
+	Name           string       `json:"name,omitempty"`
+	ImageId        string       `json:"imageId,omitempty"`
+	DeploymentType string       `json:"deploymentType,omitempty"`
+	OperatorId     string       `json:"operatorId,omitempty"`
+	InputTopics    []InputTopic `json:"inputTopics,omitempty"`
 }
 
 type InputTopic struct {
