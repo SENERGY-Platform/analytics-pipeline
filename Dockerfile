@@ -1,11 +1,10 @@
-FROM golang
-
-RUN go get -u github.com/golang/dep/cmd/dep
+FROM golang:1.12
 
 COPY . /go/src/analytics-pipeline
 WORKDIR /go/src/analytics-pipeline
 
-RUN dep ensure
+ENV GO111MODULE=on
+
 RUN go build
 
 EXPOSE 8000
