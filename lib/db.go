@@ -17,31 +17,39 @@
 package lib
 
 import (
+	"context"
 	"fmt"
+	"time"
 
-	"github.com/globalsign/mgo"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var DB *mgo.Session
+var DB *mongo.Client
+var CTX mongo.SessionContext
 
 func InitDB() {
-	session, err := mgo.Dial(GetEnv("MONGO", "localhost"))
+	CTX, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	client, err := mongo.Connect(CTX, options.Client().ApplyURI("mongodb://"+GetEnv("MONGO", "localhost")+":27017"))
 	if err != nil {
 		panic("failed to connect database: " + err.Error())
 	} else {
 		fmt.Println("Connected to DB.")
 	}
-	DB = session
+	DB = client
 }
 
-func Mongo() *mgo.Collection {
-	return DB.DB("service").C("pipelines")
+func Mongo() *mongo.Collection {
+	return DB.Database("service").Collection("pipelines")
 }
 
 func CloseDB() {
-	DB.Close()
+	err := DB.Disconnect(CTX)
+	if err != nil {
+		panic("failed to disconnect database: " + err.Error())
+	}
 }
 
-func GetDB() *mgo.Session {
+func GetDB() *mongo.Client {
 	return DB
 }

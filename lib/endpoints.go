@@ -86,6 +86,5 @@ func getUserId(req *http.Request) (userId string) {
 	if userId == "" {
 		userId = "admin"
 	}
-	fmt.Println("UserID: " + userId)
 	return
 }

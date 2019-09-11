@@ -2,10 +2,14 @@ package lib
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
 	"github.com/globalsign/mgo/bson"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type PipelineRepository interface {
@@ -23,61 +27,66 @@ func NewMongoRepo() *MongoRepo {
 }
 
 func (r *MongoRepo) InsertPipeline(pipeline Pipeline) {
-	err := Mongo().Insert(pipeline)
+	_, err := Mongo().InsertOne(CTX, pipeline)
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
 func (r *MongoRepo) All(userId string, args map[string][]string) (pipelines []Pipeline) {
-	tx := Mongo().Find(bson.M{"userid": userId})
-	if val, ok := args["search"]; ok {
-		tx = Mongo().Find(bson.M{"userid": userId, "_id": bson.RegEx{Pattern: val[0], Options: "i"}})
-	}
+	opt := options.Find()
 	for arg, value := range args {
 		if arg == "limit" {
-			limit, _ := strconv.Atoi(value[0])
-			tx = tx.Limit(limit)
+			limit, _ := strconv.ParseInt(value[0], 10, 64)
+			opt.SetLimit(limit)
 		}
 		if arg == "offset" {
-			skip, _ := strconv.Atoi(value[0])
-			tx = tx.Limit(skip)
+			skip, _ := strconv.ParseInt(value[0], 10, 64)
+			opt.SetSkip(skip)
 		}
 		if arg == "order" {
 			ord := strings.Split(value[0], ":")
-			order := ord[0]
+			order := 1
 			if ord[1] == "desc" {
-				order = "-" + ord[0]
+				order = -1
 			}
-			tx = tx.Sort(order)
+			opt.SetSort(bson.M{ord[0]: int64(order)})
 		}
 	}
-	err := tx.All(&pipelines)
+	var cur *mongo.Cursor
+	var err error
+	if val, ok := args["search"]; ok {
+		cur, err = Mongo().Find(CTX, bson.M{"userid": userId, "_id": bson.RegEx{Pattern: val[0], Options: "i"}}, opt)
+	} else {
+		cur, err = Mongo().Find(CTX, bson.M{"userid": userId}, opt)
+	}
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
+	}
+
+	for cur.Next(CTX) {
+		// create a value into which the single document can be decoded
+		var elem Pipeline
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pipelines = append(pipelines, elem)
 	}
 	return
 }
 
 func (r *MongoRepo) FindPipeline(id string, userId string) (pipeline Pipeline) {
-	err := Mongo().Find(bson.M{"id": id, "userid": userId}).One(&pipeline)
+	err := Mongo().FindOne(CTX, bson.M{"id": id, "userid": userId}).Decode(&pipeline)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	return
 }
 
 func (r *MongoRepo) DeletePipeline(id string, userId string) (err error) {
-	var pipeline Pipeline
-	err = Mongo().Find(bson.M{"id": id, "userid": userId}).One(&pipeline)
-	if err != nil {
-		return
-	}
-	err = Mongo().Remove(&pipeline)
-	if err != nil {
-		return
-	}
-	return
+	res := Mongo().FindOneAndDelete(CTX, bson.M{"id": id, "userid": userId})
+	return res.Err()
 }
 
 type MockRepo struct {
