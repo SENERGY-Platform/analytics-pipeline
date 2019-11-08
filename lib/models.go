@@ -34,6 +34,8 @@ type Pipeline struct {
 	Id          string    `bson:"id" json:"id"`
 	Name        string    `json:"name,omitempty"`
 	Description string    `json:"description,omitempty"`
+	FlowId      string    `json:"flowId,omitempty"`
+	Image       string    `json:"image,omitempty"`
 	CreatedAt   time.Time `json:"createdAt,omitempty"`
 	UpdatedAt   time.Time `json:"updatedAt,omitempty"`
 	UserId      string
