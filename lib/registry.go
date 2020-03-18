@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Nerzal/gocloak/v5"
+
 	"github.com/satori/go.uuid"
 )
 
@@ -43,7 +45,26 @@ func (r *Registry) SavePipeline(pipeline Pipeline, userId string) (id uuid.UUID)
 }
 
 func (r *Registry) GetPipelines(userId string, args map[string][]string) (pipelines []Pipeline) {
-	pipelines = r.repository.All(userId, args)
+	pipelines = r.repository.All(userId, false, args)
+	return
+}
+
+func (r *Registry) GetPipelinesAdmin(userId string, args map[string][]string) (pipelines []Pipeline) {
+	clientId := GetEnv("KEYCLOAK_CLIENT_ID", "test")
+	clientSecret := GetEnv("KEYCLOAK_CLIENT_SECRET", "test")
+	realm := GetEnv("KEYCLOAK_REALM", "test")
+
+	client := gocloak.NewClient(GetEnv("KEYCLOAK_ADDRESS", "http://test"))
+	token, err := client.LoginClient(clientId, clientSecret, realm)
+	if err != nil {
+		fmt.Println("Login failed:" + err.Error())
+	}
+	if token != nil {
+		roles, _ := client.GetRealmRolesByUserID(token.AccessToken, realm, userId)
+		if hasRole("admin", roles) {
+			pipelines = r.repository.All(userId, true, args)
+		}
+	}
 	return
 }
 
@@ -58,4 +79,13 @@ func (r *Registry) DeletePipeline(id string, userId string) Response {
 		fmt.Println("Could not delete pipeline record: " + err.Error())
 	}
 	return Response{"OK"}
+}
+
+func hasRole(test string, list []*gocloak.Role) bool {
+	for _, role := range list {
+		if *role.Name == test {
+			return true
+		}
+	}
+	return false
 }

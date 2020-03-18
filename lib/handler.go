@@ -34,6 +34,7 @@ func CreateServer() {
 	router.HandleFunc("/pipeline/{id}", GetPipelineEndpoint).Methods("GET")
 	router.HandleFunc("/pipeline/{id}", DeletePipelineEndpoint).Methods("DELETE")
 	router.HandleFunc("/pipeline", GetPipelinesEndpoint).Methods("GET")
+	router.HandleFunc("/admin/pipeline", GetPipelinesAdminEndpoint).Methods("GET")
 	c := cors.New(
 		cors.Options{
 			AllowedHeaders: []string{"Content-Type", "Authorization"},

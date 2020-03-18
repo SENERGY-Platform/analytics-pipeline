@@ -14,7 +14,7 @@ import (
 
 type PipelineRepository interface {
 	InsertPipeline(pipeline Pipeline)
-	All(userId string, args map[string][]string) (pipelines []Pipeline)
+	All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline)
 	FindPipeline(id string, userId string) (pipeline Pipeline)
 	DeletePipeline(id string, userId string) (err error)
 }
@@ -33,7 +33,7 @@ func (r *MongoRepo) InsertPipeline(pipeline Pipeline) {
 	}
 }
 
-func (r *MongoRepo) All(userId string, args map[string][]string) (pipelines []Pipeline) {
+func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline) {
 	opt := options.Find()
 	for arg, value := range args {
 		if arg == "limit" {
@@ -55,11 +55,14 @@ func (r *MongoRepo) All(userId string, args map[string][]string) (pipelines []Pi
 	}
 	var cur *mongo.Cursor
 	var err error
+	req := bson.M{"userid": userId}
 	if val, ok := args["search"]; ok {
-		cur, err = Mongo().Find(CTX, bson.M{"userid": userId, "_id": bson.RegEx{Pattern: val[0], Options: "i"}}, opt)
-	} else {
-		cur, err = Mongo().Find(CTX, bson.M{"userid": userId}, opt)
+		req = bson.M{"userid": userId, "_id": bson.RegEx{Pattern: val[0], Options: "i"}}
 	}
+	if admin {
+		req = bson.M{}
+	}
+	cur, err = Mongo().Find(CTX, req, opt)
 	if err != nil {
 		log.Println(err)
 	}
@@ -100,7 +103,7 @@ func (r *MockRepo) InsertPipeline(pipeline Pipeline) {
 
 }
 
-func (r *MockRepo) All(userId string, args map[string][]string) (pipelines []Pipeline) {
+func (r *MockRepo) All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline) {
 	return
 }
 

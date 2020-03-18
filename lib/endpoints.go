@@ -81,6 +81,16 @@ func GetPipelinesEndpoint(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func GetPipelinesAdminEndpoint(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	args := req.URL.Query()
+	err := json.NewEncoder(w).Encode(REGISTRY.GetPipelinesAdmin(getUserId(req), args))
+	if err != nil {
+		fmt.Println("Could not encode response data." + err.Error())
+	}
+}
+
 func getUserId(req *http.Request) (userId string) {
 	userId = req.Header.Get("X-UserId")
 	if userId == "" {
