@@ -16,7 +16,7 @@ type PipelineRepository interface {
 	InsertPipeline(pipeline Pipeline)
 	All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline)
 	FindPipeline(id string, userId string) (pipeline Pipeline)
-	DeletePipeline(id string, userId string) (err error)
+	DeletePipeline(id string, userId string, admin bool) (err error)
 }
 
 type MongoRepo struct {
@@ -87,8 +87,12 @@ func (r *MongoRepo) FindPipeline(id string, userId string) (pipeline Pipeline) {
 	return
 }
 
-func (r *MongoRepo) DeletePipeline(id string, userId string) (err error) {
-	res := Mongo().FindOneAndDelete(CTX, bson.M{"id": id, "userid": userId})
+func (r *MongoRepo) DeletePipeline(id string, userId string, admin bool) (err error) {
+	req := bson.M{"id": id, "userid": userId}
+	if admin {
+		req = bson.M{"id": id}
+	}
+	res := Mongo().FindOneAndDelete(CTX, req)
 	return res.Err()
 }
 
@@ -111,6 +115,6 @@ func (r *MockRepo) FindPipeline(id string, userId string) (pipeline Pipeline) {
 	return
 }
 
-func (r *MockRepo) DeletePipeline(id string, userId string) (err error) {
+func (r *MockRepo) DeletePipeline(id string, userId string, admin bool) (err error) {
 	return
 }

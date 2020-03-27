@@ -68,13 +68,36 @@ func (r *Registry) GetPipelinesAdmin(userId string, args map[string][]string) (p
 	return
 }
 
+func (r *Registry) DeletePipelineAdmin(id string, userId string) Response {
+	clientId := GetEnv("KEYCLOAK_CLIENT_ID", "test")
+	clientSecret := GetEnv("KEYCLOAK_CLIENT_SECRET", "test")
+	realm := GetEnv("KEYCLOAK_REALM", "test")
+
+	client := gocloak.NewClient(GetEnv("KEYCLOAK_ADDRESS", "http://test"))
+	token, err := client.LoginClient(clientId, clientSecret, realm)
+	if err != nil {
+		fmt.Println("Login failed:" + err.Error())
+	}
+
+	if token != nil {
+		roles, _ := client.GetRealmRolesByUserID(token.AccessToken, realm, userId)
+		if hasRole("admin", roles) {
+			err = r.repository.DeletePipeline(id, userId, true)
+			if err != nil {
+				fmt.Println("Could not delete pipeline record: " + err.Error())
+			}
+		}
+	}
+	return Response{"OK"}
+}
+
 func (r *Registry) GetPipeline(id string, userId string) (pipeline Pipeline) {
 	pipeline = r.repository.FindPipeline(id, userId)
 	return
 }
 
 func (r *Registry) DeletePipeline(id string, userId string) Response {
-	err := r.repository.DeletePipeline(id, userId)
+	err := r.repository.DeletePipeline(id, userId, false)
 	if err != nil {
 		fmt.Println("Could not delete pipeline record: " + err.Error())
 	}
