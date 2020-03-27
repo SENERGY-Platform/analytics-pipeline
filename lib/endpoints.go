@@ -91,6 +91,16 @@ func GetPipelinesAdminEndpoint(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func DeletePipelineAdminEndpoint(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	err := json.NewEncoder(w).Encode(REGISTRY.DeletePipelineAdmin(vars["id"], getUserId(req)))
+	if err != nil {
+		fmt.Println("Could not encode response data." + err.Error())
+	}
+}
+
 func getUserId(req *http.Request) (userId string) {
 	userId = req.Header.Get("X-UserId")
 	if userId == "" {
