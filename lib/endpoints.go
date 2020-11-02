@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/dgrijalva/jwt-go"
+
 	"github.com/gorilla/mux"
 )
 
@@ -104,7 +106,18 @@ func DeletePipelineAdminEndpoint(w http.ResponseWriter, req *http.Request) {
 func getUserId(req *http.Request) (userId string) {
 	userId = req.Header.Get("X-UserId")
 	if userId == "" {
-		userId = "admin"
+		if userId == "" && req.Header.Get("Authorization") != "" {
+			_, claims := parseJWTToken(req.Header.Get("Authorization")[7:])
+			userId = claims.Sub
+			if userId == "" {
+				userId = "dummy"
+			}
+		}
 	}
+	return
+}
+
+func parseJWTToken(encodedToken string) (token *jwt.Token, claims Claims) {
+	token, _ = jwt.ParseWithClaims(encodedToken, &claims, nil)
 	return
 }
