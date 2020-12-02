@@ -1,6 +1,6 @@
 module analytics-pipeline
 
-go 1.12
+go 1.15
 
 require (
 	github.com/Nerzal/gocloak/v5 v5.0.1
@@ -9,6 +9,7 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
+	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.7.3
 	github.com/joho/godotenv v1.3.0
 	github.com/kr/pretty v0.1.0 // indirect

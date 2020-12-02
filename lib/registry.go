@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Nerzal/gocloak/v5"
+	"github.com/google/uuid"
 
-	"github.com/satori/go.uuid"
+	"github.com/Nerzal/gocloak/v5"
 )
 
 type Registry struct {
@@ -35,7 +35,7 @@ func NewRegistry(repository PipelineRepository) *Registry {
 
 func (r *Registry) SavePipeline(pipeline Pipeline, userId string) (id uuid.UUID) {
 	// Create new uuid to use as pipeline id
-	id = uuid.NewV4()
+	id = uuid.New()
 	pipeline.Id = id.String()
 	pipeline.UserId = userId
 	pipeline.CreatedAt = time.Now()
