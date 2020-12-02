@@ -1,12 +1,19 @@
-FROM golang:1.12
+FROM golang:1.15 AS builder
 
-COPY . /go/src/analytics-pipeline
-WORKDIR /go/src/analytics-pipeline
+COPY . /go/src/app
+WORKDIR /go/src/app
 
 ENV GO111MODULE=on
 
-RUN go build
+RUN CGO_ENABLED=0 go build -o app
+
+RUN git log -1 --oneline > version.txt
+
+FROM alpine:latest
+WORKDIR /root/
+COPY --from=builder /go/src/app/app .
+COPY --from=builder /go/src/app/version.txt .
 
 EXPOSE 8000
 
-CMD ./analytics-pipeline
+ENTRYPOINT ["./app"]
