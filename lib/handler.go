@@ -44,5 +44,5 @@ func CreateServer() {
 		})
 	handler := c.Handler(router)
 	logger := NewLogger(handler, "CALL")
-	log.Fatal(http.ListenAndServe("localhost:"+port, logger))
+	log.Fatal(http.ListenAndServe(GetEnv("SERVERNAME", "")+":"+port, logger))
 }
