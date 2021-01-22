@@ -43,13 +43,14 @@ type Pipeline struct {
 }
 
 type Operator struct {
-	Id             string       `json:"id,omitempty"`
-	Name           string       `json:"name,omitempty"`
-	ApplicationId  uuid.UUID    `json:"applicationId,omitempty"`
-	ImageId        string       `json:"imageId,omitempty"`
-	DeploymentType string       `json:"deploymentType,omitempty"`
-	OperatorId     string       `json:"operatorId,omitempty"`
-	InputTopics    []InputTopic `json:"inputTopics,omitempty"`
+	Id              string           `json:"id,omitempty"`
+	Name            string           `json:"name,omitempty"`
+	ApplicationId   uuid.UUID        `json:"applicationId,omitempty"`
+	ImageId         string           `json:"imageId,omitempty"`
+	DeploymentType  string           `json:"deploymentType,omitempty"`
+	OperatorId      string           `json:"operatorId,omitempty"`
+	InputTopics     []InputTopic     `json:"inputTopics,omitempty"`
+	InputSelections []InputSelection `json:"inputSelections,omitempty"`
 }
 
 type InputTopic struct {
@@ -71,4 +72,12 @@ type Claims struct {
 
 func (c Claims) Valid() error {
 	return nil
+}
+
+type InputSelection struct {
+	InputName         string   `json:"inputName,omitempty"` // references mapping name
+	AspectId          string   `json:"aspectId,omitempty"`
+	FunctionId        string   `json:"functionId,omitempty"`
+	CharacteristicIds []string `json:"characteristicIds,omitempty"`
+	SelectableId      string   `json:"selectableId,omitempty"` // either device or group. can be used for SNRGY-1172, needed to update devices in group
 }
