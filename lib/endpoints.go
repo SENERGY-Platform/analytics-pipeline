@@ -53,6 +53,22 @@ func PostPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func PutPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
+	decoder := json.NewDecoder(req.Body)
+	var pipeReq Pipeline
+	err := decoder.Decode(&pipeReq)
+	if err != nil {
+		fmt.Println("Could not decode Pipeline Request data." + err.Error())
+	}
+	uuid := REGISTRY.UpdatePipeline(pipeReq, getUserId(req))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	err = json.NewEncoder(w).Encode(PipelineResponse{uuid})
+	if err != nil {
+		fmt.Println("Could not encode response data." + err.Error())
+	}
+}
+
 func GetPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	w.Header().Set("Content-Type", "application/json")

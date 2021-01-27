@@ -44,6 +44,12 @@ func (r *Registry) SavePipeline(pipeline Pipeline, userId string) (id uuid.UUID)
 	return
 }
 
+func (r *Registry) UpdatePipeline(pipeline Pipeline, userId string) (id uuid.UUID) {
+	pipeline.UpdatedAt = time.Now()
+	r.repository.UpdatePipeline(pipeline, userId)
+	return
+}
+
 func (r *Registry) GetPipelines(userId string, args map[string][]string) (pipelines []Pipeline) {
 	pipelines = r.repository.All(userId, false, args)
 	return

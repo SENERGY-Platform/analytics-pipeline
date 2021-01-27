@@ -31,6 +31,7 @@ func CreateServer() {
 	router := mux.NewRouter()
 	router.HandleFunc("/", GetRootEndpoint).Methods("GET")
 	router.HandleFunc("/pipeline", PostPipelineEndpoint).Methods("POST")
+	router.HandleFunc("/pipeline", PutPipelineEndpoint).Methods("PUT")
 	router.HandleFunc("/pipeline/{id}", GetPipelineEndpoint).Methods("GET")
 	router.HandleFunc("/pipeline/{id}", DeletePipelineEndpoint).Methods("DELETE")
 	router.HandleFunc("/pipeline", GetPipelinesEndpoint).Methods("GET")

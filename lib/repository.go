@@ -14,6 +14,7 @@ import (
 
 type PipelineRepository interface {
 	InsertPipeline(pipeline Pipeline)
+	UpdatePipeline(pipeline Pipeline, userId string)
 	All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline)
 	FindPipeline(id string, userId string) (pipeline Pipeline)
 	DeletePipeline(id string, userId string, admin bool) (err error)
@@ -28,6 +29,13 @@ func NewMongoRepo() *MongoRepo {
 
 func (r *MongoRepo) InsertPipeline(pipeline Pipeline) {
 	_, err := Mongo().InsertOne(CTX, pipeline)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func (r *MongoRepo) UpdatePipeline(pipeline Pipeline, userId string) {
+	_, err := Mongo().UpdateOne(CTX, bson.M{"id": pipeline.Id, "userid": userId}, pipeline)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -105,6 +113,9 @@ func NewMockRepo() *MockRepo {
 
 func (r *MockRepo) InsertPipeline(pipeline Pipeline) {
 
+}
+
+func (r *MockRepo) UpdatePipeline(pipeline Pipeline, userId string) {
 }
 
 func (r *MockRepo) All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline) {
