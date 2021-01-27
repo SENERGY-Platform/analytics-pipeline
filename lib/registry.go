@@ -45,7 +45,10 @@ func (r *Registry) SavePipeline(pipeline Pipeline, userId string) (id uuid.UUID)
 }
 
 func (r *Registry) UpdatePipeline(pipeline Pipeline, userId string) (id uuid.UUID) {
+	oldPipeline := r.repository.FindPipeline(pipeline.Id, userId)
+	pipeline.CreatedAt = oldPipeline.CreatedAt
 	pipeline.UpdatedAt = time.Now()
+	pipeline.UserId = oldPipeline.UserId
 	r.repository.UpdatePipeline(pipeline, userId)
 	return
 }

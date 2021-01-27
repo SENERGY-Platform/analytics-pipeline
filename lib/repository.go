@@ -35,7 +35,8 @@ func (r *MongoRepo) InsertPipeline(pipeline Pipeline) {
 }
 
 func (r *MongoRepo) UpdatePipeline(pipeline Pipeline, userId string) {
-	_, err := Mongo().UpdateOne(CTX, bson.M{"id": pipeline.Id, "userid": userId}, pipeline)
+	_, err := Mongo().ReplaceOne(CTX, bson.M{"id": pipeline.Id, "userid": userId}, pipeline)
+
 	if err != nil {
 		fmt.Println(err)
 	}
