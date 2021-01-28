@@ -31,26 +31,31 @@ type PipelineResponse struct {
 }
 
 type Pipeline struct {
-	Id          string    `bson:"id" json:"id"`
-	Name        string    `json:"name,omitempty"`
-	Description string    `json:"description,omitempty"`
-	FlowId      string    `json:"flowId,omitempty"`
-	Image       string    `json:"image,omitempty"`
-	CreatedAt   time.Time `json:"createdAt,omitempty"`
-	UpdatedAt   time.Time `json:"updatedAt,omitempty"`
-	UserId      string
-	Operators   []Operator `json:"operators,omitempty"`
+	Id                 string    `bson:"id" json:"id"`
+	Name               string    `json:"name,omitempty"`
+	Description        string    `json:"description,omitempty"`
+	FlowId             string    `json:"flowId,omitempty"`
+	Image              string    `json:"image,omitempty"`
+	WindowTime         int       `json:"windowTime,omitempty"`
+	ConsumeAllMessages bool      `json:"consumeAllMessages,omitempty"`
+	Metrics            bool      `json:"metrics,omitempty"`
+	CreatedAt          time.Time `json:"createdAt,omitempty"`
+	UpdatedAt          time.Time `json:"updatedAt,omitempty"`
+	UserId             string
+	Operators          []Operator `json:"operators,omitempty"`
 }
 
 type Operator struct {
-	Id              string           `json:"id,omitempty"`
-	Name            string           `json:"name,omitempty"`
-	ApplicationId   uuid.UUID        `json:"applicationId,omitempty"`
-	ImageId         string           `json:"imageId,omitempty"`
-	DeploymentType  string           `json:"deploymentType,omitempty"`
-	OperatorId      string           `json:"operatorId,omitempty"`
-	InputTopics     []InputTopic     `json:"inputTopics,omitempty"`
-	InputSelections []InputSelection `json:"inputSelections,omitempty"`
+	Id              string            `json:"id,omitempty"`
+	Name            string            `json:"name,omitempty"`
+	ApplicationId   uuid.UUID         `json:"applicationId,omitempty"`
+	ImageId         string            `json:"imageId,omitempty"`
+	DeploymentType  string            `json:"deploymentType,omitempty"`
+	OperatorId      string            `json:"operatorId,omitempty"`
+	Config          map[string]string `json:"config,omitempty"`
+	OutputTopic     string            `json:"outputTopic,omitempty"`
+	InputTopics     []InputTopic      `json:"inputTopics,omitempty"`
+	InputSelections []InputSelection  `json:"inputSelections,omitempty"`
 }
 
 type InputTopic struct {
