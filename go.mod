@@ -1,12 +1,12 @@
 module analytics-pipeline
 
-go 1.15
+go 1.16
 
 require (
 	github.com/Nerzal/gocloak/v5 v5.0.1
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/go-stack/stack v1.8.0 // indirect
+	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/uuid v1.1.2
