@@ -56,6 +56,7 @@ type Operator struct {
 	OutputTopic     string            `json:"outputTopic,omitempty"`
 	InputTopics     []InputTopic      `json:"inputTopics,omitempty"`
 	InputSelections []InputSelection  `json:"inputSelections,omitempty"`
+	PersistData     bool              `json:"persistData,omitempty"`
 }
 
 type InputTopic struct {
