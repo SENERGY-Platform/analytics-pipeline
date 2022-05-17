@@ -1,4 +1,4 @@
-FROM golang:1.16 AS builder
+FROM golang:1.18 AS builder
 
 COPY . /go/src/app
 WORKDIR /go/src/app
@@ -15,5 +15,7 @@ COPY --from=builder /go/src/app/app .
 COPY --from=builder /go/src/app/version.txt .
 
 EXPOSE 8000
+
+LABEL org.opencontainers.image.source https://github.com/SENERGY-Platform/analytics-pipeline
 
 ENTRYPOINT ["./app"]
