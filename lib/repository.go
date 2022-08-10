@@ -13,10 +13,10 @@ import (
 )
 
 type PipelineRepository interface {
-	InsertPipeline(pipeline Pipeline)
-	UpdatePipeline(pipeline Pipeline, userId string)
-	All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline)
-	FindPipeline(id string, userId string) (pipeline Pipeline)
+	InsertPipeline(pipeline Pipeline) (err error)
+	UpdatePipeline(pipeline Pipeline, userId string) (err error)
+	All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline, err error)
+	FindPipeline(id string, userId string) (pipeline Pipeline, err error)
 	DeletePipeline(id string, userId string, admin bool) (err error)
 }
 
@@ -27,22 +27,26 @@ func NewMongoRepo() *MongoRepo {
 	return &MongoRepo{}
 }
 
-func (r *MongoRepo) InsertPipeline(pipeline Pipeline) {
-	_, err := Mongo().InsertOne(CTX, pipeline)
+func (r *MongoRepo) InsertPipeline(pipeline Pipeline) (err error) {
+	_, err = Mongo().InsertOne(CTX, pipeline)
 	if err != nil {
 		fmt.Println(err)
+		return err
 	}
+	return nil
 }
 
-func (r *MongoRepo) UpdatePipeline(pipeline Pipeline, userId string) {
-	_, err := Mongo().ReplaceOne(CTX, bson.M{"id": pipeline.Id, "userid": userId}, pipeline)
+func (r *MongoRepo) UpdatePipeline(pipeline Pipeline, userId string) (err error) {
+	_, err = Mongo().ReplaceOne(CTX, bson.M{"id": pipeline.Id, "userid": userId}, pipeline)
 
 	if err != nil {
 		fmt.Println(err)
+		return err
 	}
+	return nil
 }
 
-func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline) {
+func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline, err error) {
 	opt := options.Find()
 	for arg, value := range args {
 		if arg == "limit" {
@@ -63,7 +67,6 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 		}
 	}
 	var cur *mongo.Cursor
-	var err error
 	req := bson.M{"userid": userId}
 	if val, ok := args["search"]; ok {
 		req = bson.M{"userid": userId, "_id": bson.RegEx{Pattern: val[0], Options: "i"}}
@@ -74,6 +77,7 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 	cur, err = Mongo().Find(CTX, req, opt)
 	if err != nil {
 		log.Println(err)
+		return nil, err
 	}
 
 	for cur.Next(CTX) {
@@ -82,18 +86,20 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 		err := cur.Decode(&elem)
 		if err != nil {
 			log.Fatal(err)
+			return nil, err
 		}
 		pipelines = append(pipelines, elem)
 	}
-	return
+	return pipelines, err
 }
 
-func (r *MongoRepo) FindPipeline(id string, userId string) (pipeline Pipeline) {
-	err := Mongo().FindOne(CTX, bson.M{"id": id, "userid": userId}).Decode(&pipeline)
+func (r *MongoRepo) FindPipeline(id string, userId string) (pipeline Pipeline, err error) {
+	err = Mongo().FindOne(CTX, bson.M{"id": id, "userid": userId}).Decode(&pipeline)
 	if err != nil {
 		log.Println(err)
+		return Pipeline{}, err
 	}
-	return
+	return pipeline, err
 }
 
 func (r *MongoRepo) DeletePipeline(id string, userId string, admin bool) (err error) {
@@ -112,18 +118,19 @@ func NewMockRepo() *MockRepo {
 	return &MockRepo{}
 }
 
-func (r *MockRepo) InsertPipeline(pipeline Pipeline) {
-
-}
-
-func (r *MockRepo) UpdatePipeline(pipeline Pipeline, userId string) {
-}
-
-func (r *MockRepo) All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline) {
+func (r *MockRepo) InsertPipeline(pipeline Pipeline) (err error) {
 	return
 }
 
-func (r *MockRepo) FindPipeline(id string, userId string) (pipeline Pipeline) {
+func (r *MockRepo) UpdatePipeline(pipeline Pipeline, userId string) (err error) {
+	return
+}
+
+func (r *MockRepo) All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline, err error) {
+	return
+}
+
+func (r *MockRepo) FindPipeline(id string, userId string) (pipeline Pipeline, err error) {
 	return
 }
 

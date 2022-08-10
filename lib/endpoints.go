@@ -44,7 +44,11 @@ func PostPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		fmt.Println("Could not decode Pipeline Request data." + err.Error())
 	}
-	uuid := REGISTRY.SavePipeline(pipeReq, getUserId(req))
+	uuid, err := REGISTRY.SavePipeline(pipeReq, getUserId(req))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	err = json.NewEncoder(w).Encode(PipelineResponse{uuid})
@@ -60,7 +64,11 @@ func PutPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		fmt.Println("Could not decode Pipeline Request data." + err.Error())
 	}
-	uuid := REGISTRY.UpdatePipeline(pipeReq, getUserId(req))
+	uuid, err := REGISTRY.UpdatePipeline(pipeReq, getUserId(req))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	err = json.NewEncoder(w).Encode(PipelineResponse{uuid})
@@ -73,7 +81,12 @@ func GetPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	err := json.NewEncoder(w).Encode(REGISTRY.GetPipeline(vars["id"], getUserId(req)))
+	pipe, err := REGISTRY.GetPipeline(vars["id"], getUserId(req))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = json.NewEncoder(w).Encode(pipe)
 	if err != nil {
 		fmt.Println("Could not encode response data." + err.Error())
 	}
@@ -93,7 +106,12 @@ func GetPipelinesEndpoint(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	args := req.URL.Query()
-	err := json.NewEncoder(w).Encode(REGISTRY.GetPipelines(getUserId(req), args))
+	pipe, err := REGISTRY.GetPipelines(getUserId(req), args)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = json.NewEncoder(w).Encode(pipe)
 	if err != nil {
 		fmt.Println("Could not encode response data." + err.Error())
 	}
@@ -103,7 +121,12 @@ func GetPipelinesAdminEndpoint(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	args := req.URL.Query()
-	err := json.NewEncoder(w).Encode(REGISTRY.GetPipelinesAdmin(getUserId(req), args))
+	pipe, err := REGISTRY.GetPipelinesAdmin(getUserId(req), args)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = json.NewEncoder(w).Encode(pipe)
 	if err != nil {
 		fmt.Println("Could not encode response data." + err.Error())
 	}

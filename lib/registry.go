@@ -33,32 +33,37 @@ func NewRegistry(repository PipelineRepository) *Registry {
 	return &Registry{repository}
 }
 
-func (r *Registry) SavePipeline(pipeline Pipeline, userId string) (id uuid.UUID) {
+func (r *Registry) SavePipeline(pipeline Pipeline, userId string) (id uuid.UUID, err error) {
 	// Create new uuid to use as pipeline id
 	id = uuid.New()
 	pipeline.Id = id.String()
 	pipeline.UserId = userId
 	pipeline.CreatedAt = time.Now()
 	pipeline.UpdatedAt = time.Now()
-	r.repository.InsertPipeline(pipeline)
+	err = r.repository.InsertPipeline(pipeline)
 	return
 }
 
-func (r *Registry) UpdatePipeline(pipeline Pipeline, userId string) (id uuid.UUID) {
-	oldPipeline := r.repository.FindPipeline(pipeline.Id, userId)
+func (r *Registry) UpdatePipeline(pipeline Pipeline, userId string) (id uuid.UUID, err error) {
+	oldPipeline, err := r.repository.FindPipeline(pipeline.Id, userId)
+	if err != nil {
+		return [16]byte{}, err
+	}
 	pipeline.CreatedAt = oldPipeline.CreatedAt
 	pipeline.UpdatedAt = time.Now()
 	pipeline.UserId = oldPipeline.UserId
-	r.repository.UpdatePipeline(pipeline, userId)
+	err = r.repository.UpdatePipeline(pipeline, userId)
+	if err != nil {
+		return [16]byte{}, err
+	}
 	return
 }
 
-func (r *Registry) GetPipelines(userId string, args map[string][]string) (pipelines []Pipeline) {
-	pipelines = r.repository.All(userId, false, args)
-	return
+func (r *Registry) GetPipelines(userId string, args map[string][]string) (pipelines []Pipeline, err error) {
+	return r.repository.All(userId, false, args)
 }
 
-func (r *Registry) GetPipelinesAdmin(userId string, args map[string][]string) (pipelines []Pipeline) {
+func (r *Registry) GetPipelinesAdmin(userId string, args map[string][]string) (pipelines []Pipeline, err error) {
 	clientId := GetEnv("KEYCLOAK_CLIENT_ID", "test")
 	clientSecret := GetEnv("KEYCLOAK_CLIENT_SECRET", "test")
 	realm := GetEnv("KEYCLOAK_REALM", "test")
@@ -71,7 +76,7 @@ func (r *Registry) GetPipelinesAdmin(userId string, args map[string][]string) (p
 	if token != nil {
 		roles, _ := client.GetRealmRolesByUserID(token.AccessToken, realm, userId)
 		if hasRole("admin", roles) {
-			pipelines = r.repository.All(userId, true, args)
+			pipelines, err = r.repository.All(userId, true, args)
 		}
 	}
 	return
@@ -100,9 +105,8 @@ func (r *Registry) DeletePipelineAdmin(id string, userId string) Response {
 	return Response{"OK"}
 }
 
-func (r *Registry) GetPipeline(id string, userId string) (pipeline Pipeline) {
-	pipeline = r.repository.FindPipeline(id, userId)
-	return
+func (r *Registry) GetPipeline(id string, userId string) (pipeline Pipeline, err error) {
+	return r.repository.FindPipeline(id, userId)
 }
 
 func (r *Registry) DeletePipeline(id string, userId string) Response {
