@@ -37,6 +37,7 @@ type Pipeline struct {
 	FlowId             string    `json:"flowId,omitempty"`
 	Image              string    `json:"image,omitempty"`
 	WindowTime         int       `json:"windowTime,omitempty"`
+	MergeStrategy      string    `json:"mergeStrategy,omitempty"`
 	ConsumeAllMessages bool      `json:"consumeAllMessages,omitempty"`
 	Metrics            bool      `json:"metrics,omitempty"`
 	CreatedAt          time.Time `json:"createdAt,omitempty"`
