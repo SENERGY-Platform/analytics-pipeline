@@ -19,6 +19,7 @@ package lib
 import (
 	"encoding/json"
 	"fmt"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 
 	"github.com/golang-jwt/jwt"
@@ -82,6 +83,10 @@ func PutPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
 func GetPipelineEndpoint(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	pipe, err := REGISTRY.GetPipeline(vars["id"], getUserId(req))
+	if err == mongo.ErrNoDocuments {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
