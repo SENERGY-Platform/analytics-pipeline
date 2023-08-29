@@ -17,9 +17,9 @@
 package main
 
 import (
-	"log"
+	"github.com/SENERGY-Platform/analytics-pipeline/lib"
 	"github.com/joho/godotenv"
-	"analytics-pipeline/lib"
+	"log"
 )
 
 func main() {
