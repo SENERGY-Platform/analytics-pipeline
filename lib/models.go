@@ -58,6 +58,7 @@ type Operator struct {
 	InputTopics     []InputTopic      `json:"inputTopics,omitempty"`
 	InputSelections []InputSelection  `json:"inputSelections,omitempty"`
 	PersistData     bool              `json:"persistData,omitempty"`
+	Cost            uint              `json:"cost"`
 }
 
 type InputTopic struct {
