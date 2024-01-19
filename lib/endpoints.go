@@ -19,8 +19,11 @@ package lib
 import (
 	"encoding/json"
 	"fmt"
-	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
+	"slices"
+	"strings"
+
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/golang-jwt/jwt"
 
@@ -160,6 +163,14 @@ func DeletePipelineAdminEndpoint(w http.ResponseWriter, req *http.Request) {
 }
 
 func getUserId(req *http.Request) (userId string) {
+	forUser := req.URL.Query().Get("for_user")
+	if forUser != "" {
+		roles := strings.Split(req.Header.Get("X-User-Roles"), ", ")
+		if slices.Contains[[]string](roles, "admin") {
+			return forUser
+		}
+	}
+
 	userId = req.Header.Get("X-UserId")
 	if userId == "" {
 		if userId == "" && req.Header.Get("Authorization") != "" {
