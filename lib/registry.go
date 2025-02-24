@@ -59,11 +59,11 @@ func (r *Registry) UpdatePipeline(pipeline Pipeline, userId string) (id uuid.UUI
 	return
 }
 
-func (r *Registry) GetPipelines(userId string, args map[string][]string) (pipelines []Pipeline, err error) {
+func (r *Registry) GetPipelines(userId string, args map[string][]string) (pipelines PipelinesResponse, err error) {
 	return r.repository.All(userId, false, args)
 }
 
-func (r *Registry) GetPipelinesAdmin(userId string, args map[string][]string) (pipelines []Pipeline, err error) {
+func (r *Registry) GetPipelinesAdmin(userId string, args map[string][]string) (pipelines PipelinesResponse, err error) {
 	clientId := GetEnv("KEYCLOAK_CLIENT_ID", "test")
 	clientSecret := GetEnv("KEYCLOAK_CLIENT_SECRET", "test")
 	realm := GetEnv("KEYCLOAK_REALM", "test")

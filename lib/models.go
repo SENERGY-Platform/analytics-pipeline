@@ -30,6 +30,11 @@ type PipelineResponse struct {
 	Id uuid.UUID `json:"id,omitempty"`
 }
 
+type PipelinesResponse struct {
+	Data  []Pipeline `json:"data,omitempty"`
+	Total int        `json:"total,omitempty"`
+}
+
 type Pipeline struct {
 	Id                 string    `bson:"id" json:"id"`
 	Name               string    `json:"name,omitempty"`
@@ -47,29 +52,29 @@ type Pipeline struct {
 }
 
 type UpstreamConfig struct {
-	Enabled bool 
+	Enabled bool
 }
 
 type DownstreamConfig struct {
-	Enabled bool
-	InstanceID string 
+	Enabled    bool
+	InstanceID string
 }
 
 type Operator struct {
-	Id              string            `json:"id,omitempty"`
-	Name            string            `json:"name,omitempty"`
-	ApplicationId   uuid.UUID         `json:"applicationId,omitempty"`
-	ImageId         string            `json:"imageId,omitempty"`
-	DeploymentType  string            `json:"deploymentType,omitempty"`
-	OperatorId      string            `json:"operatorId,omitempty"`
-	Config          map[string]string `json:"config,omitempty"`
-	OutputTopic     string            `json:"outputTopic,omitempty"`
-	InputTopics     []InputTopic      `json:"inputTopics,omitempty"`
-	InputSelections []InputSelection  `json:"inputSelections,omitempty"`
-	PersistData     bool              `json:"persistData,omitempty"`
-	Cost            uint              `json:"cost"`
-	UpstreamConfig UpstreamConfig `json:"upstream,omitempty"`
-	DownstreamConfig DownstreamConfig `json:"downstream,omitempty"`
+	Id               string            `json:"id,omitempty"`
+	Name             string            `json:"name,omitempty"`
+	ApplicationId    uuid.UUID         `json:"applicationId,omitempty"`
+	ImageId          string            `json:"imageId,omitempty"`
+	DeploymentType   string            `json:"deploymentType,omitempty"`
+	OperatorId       string            `json:"operatorId,omitempty"`
+	Config           map[string]string `json:"config,omitempty"`
+	OutputTopic      string            `json:"outputTopic,omitempty"`
+	InputTopics      []InputTopic      `json:"inputTopics,omitempty"`
+	InputSelections  []InputSelection  `json:"inputSelections,omitempty"`
+	PersistData      bool              `json:"persistData,omitempty"`
+	Cost             uint              `json:"cost"`
+	UpstreamConfig   UpstreamConfig    `json:"upstream,omitempty"`
+	DownstreamConfig DownstreamConfig  `json:"downstream,omitempty"`
 }
 
 type InputTopic struct {

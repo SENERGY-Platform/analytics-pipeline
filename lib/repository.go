@@ -15,7 +15,7 @@ import (
 type PipelineRepository interface {
 	InsertPipeline(pipeline Pipeline) (err error)
 	UpdatePipeline(pipeline Pipeline, userId string) (err error)
-	All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline, err error)
+	All(userId string, admin bool, args map[string][]string) (pipelines PipelinesResponse, err error)
 	FindPipeline(id string, userId string) (pipeline Pipeline, err error)
 	DeletePipeline(id string, userId string, admin bool) (err error)
 }
@@ -46,7 +46,7 @@ func (r *MongoRepo) UpdatePipeline(pipeline Pipeline, userId string) (err error)
 	return nil
 }
 
-func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline, err error) {
+func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pipelines PipelinesResponse, err error) {
 	opt := options.Find()
 	for arg, value := range args {
 		if arg == "limit" {
@@ -77,20 +77,21 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 	cur, err = Mongo().Find(CTX, req, opt)
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return
 	}
 
 	for cur.Next(CTX) {
 		// create a value into which the single document can be decoded
 		var elem Pipeline
-		err := cur.Decode(&elem)
+		err = cur.Decode(&elem)
 		if err != nil {
 			log.Fatal(err)
-			return nil, err
+			return
 		}
-		pipelines = append(pipelines, elem)
+		pipelines.Data = append(pipelines.Data, elem)
 	}
-	return pipelines, err
+	pipelines.Total = len(pipelines.Data)
+	return
 }
 
 func (r *MongoRepo) FindPipeline(id string, userId string) (pipeline Pipeline, err error) {
@@ -126,7 +127,7 @@ func (r *MockRepo) UpdatePipeline(pipeline Pipeline, userId string) (err error) 
 	return
 }
 
-func (r *MockRepo) All(userId string, admin bool, args map[string][]string) (pipelines []Pipeline, err error) {
+func (r *MockRepo) All(userId string, admin bool, args map[string][]string) (pipelines PipelinesResponse, err error) {
 	return
 }
 
