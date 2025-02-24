@@ -79,6 +79,15 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 		log.Println(err)
 		return
 	}
+	req = bson.M{"userid": userId}
+	if admin {
+		req = bson.M{}
+	}
+	pipelines.Total, err = Mongo().CountDocuments(CTX, req)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
 	for cur.Next(CTX) {
 		// create a value into which the single document can be decoded
@@ -90,7 +99,6 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 		}
 		pipelines.Data = append(pipelines.Data, elem)
 	}
-	pipelines.Total = len(pipelines.Data)
 	return
 }
 
