@@ -42,7 +42,7 @@ func (c *Client) UpdatePipeline(token string, userId string, pipeline lib.Pipeli
 	req, err := http.NewRequest(http.MethodPut, c.baseUrl+"/pipeline", bytes.NewBuffer(b))
 	return do[uuid.UUID](req, token, userId)
 }
-func (c *Client) GetPipelines(token string, userId string, limit int, offset int, order string, asc bool) (pipelines []lib.Pipeline, err error, code int) {
+func (c *Client) GetPipelines(token string, userId string, limit int, offset int, order string, asc bool) (pipelines lib.PipelinesResponse, err error, code int) {
 	url := c.baseUrl + "/pipeline?limit=" + strconv.Itoa(limit) + "&offset=" + strconv.Itoa(offset)
 	if order != "" {
 		url += "order=" + order + "."
@@ -53,10 +53,10 @@ func (c *Client) GetPipelines(token string, userId string, limit int, offset int
 		}
 	}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
-	return do[[]lib.Pipeline](req, token, userId)
+	return do[lib.PipelinesResponse](req, token, userId)
 }
 
-func (c *Client) GetPipelinesAdmin(token string, userId string, limit int, offset int, order string, asc bool) (pipelines []lib.Pipeline, err error, code int) {
+func (c *Client) GetPipelinesAdmin(token string, userId string, limit int, offset int, order string, asc bool) (pipelines lib.PipelinesResponse, err error, code int) {
 	url := c.baseUrl + "/admin/pipeline?limit=" + strconv.Itoa(limit) + "&offset=" + strconv.Itoa(offset)
 	if order != "" {
 		url += "order=" + order + "."
@@ -67,7 +67,7 @@ func (c *Client) GetPipelinesAdmin(token string, userId string, limit int, offse
 		}
 	}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
-	return do[[]lib.Pipeline](req, token, userId)
+	return do[lib.PipelinesResponse](req, token, userId)
 }
 
 func (c *Client) DeletePipelineAdmin(token string, userId string, id string) (resp lib.Response, err error, code int) {
