@@ -119,22 +119,22 @@ func NewMockRepo() *MockRepo {
 	return &MockRepo{}
 }
 
-func (r *MockRepo) InsertPipeline(pipeline Pipeline) (err error) {
+func (r *MockRepo) InsertPipeline(Pipeline) (err error) {
 	return
 }
 
-func (r *MockRepo) UpdatePipeline(pipeline Pipeline, userId string) (err error) {
+func (r *MockRepo) UpdatePipeline(Pipeline, string) (err error) {
 	return
 }
 
-func (r *MockRepo) All(userId string, admin bool, args map[string][]string) (pipelines PipelinesResponse, err error) {
+func (r *MockRepo) All(string, bool, map[string][]string) (pipelines PipelinesResponse, err error) {
 	return
 }
 
-func (r *MockRepo) FindPipeline(id string, userId string) (pipeline Pipeline, err error) {
+func (r *MockRepo) FindPipeline(string, string) (pipeline Pipeline, err error) {
 	return
 }
 
-func (r *MockRepo) DeletePipeline(id string, userId string, admin bool) (err error) {
+func (r *MockRepo) DeletePipeline(string, string, bool) (err error) {
 	return
 }
