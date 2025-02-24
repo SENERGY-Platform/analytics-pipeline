@@ -69,7 +69,7 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 	var cur *mongo.Cursor
 	req := bson.M{"userid": userId}
 	if val, ok := args["search"]; ok {
-		req = bson.M{"userid": userId, "_id": bson.RegEx{Pattern: val[0], Options: "i"}}
+		req = bson.M{"userid": userId, "name": bson.M{"$regex": val[0]}}
 	}
 	if admin {
 		req = bson.M{}
@@ -88,7 +88,7 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 		log.Println(err)
 		return
 	}
-
+	pipelines.Data = make([]Pipeline, 0)
 	for cur.Next(CTX) {
 		// create a value into which the single document can be decoded
 		var elem Pipeline

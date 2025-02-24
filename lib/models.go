@@ -31,8 +31,8 @@ type PipelineResponse struct {
 }
 
 type PipelinesResponse struct {
-	Data  []Pipeline `json:"data,omitempty"`
-	Total int64      `json:"total,omitempty"`
+	Data  []Pipeline `json:"data"`
+	Total int64      `json:"total"`
 }
 
 type Pipeline struct {
