@@ -18,32 +18,159 @@ package lib
 
 import (
 	"fmt"
+	"github.com/SENERGY-Platform/service-commons/pkg/jwt"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/mux"
-	"github.com/rs/cors"
+	"slices"
+	"strconv"
+	"strings"
 )
+
+var REGISTRY = NewRegistry(NewMongoRepo())
 
 func CreateServer() {
 	port := GetEnv("API_PORT", "8000")
 	fmt.Print("Starting Server at port " + port + "\n")
-	router := mux.NewRouter()
-	router.HandleFunc("/", GetRootEndpoint).Methods("GET")
-	router.HandleFunc("/pipeline", PostPipelineEndpoint).Methods("POST")
-	router.HandleFunc("/pipeline", PutPipelineEndpoint).Methods("PUT")
-	router.HandleFunc("/pipeline/{id}", GetPipelineEndpoint).Methods("GET")
-	router.HandleFunc("/pipeline/{id}", DeletePipelineEndpoint).Methods("DELETE")
-	router.HandleFunc("/pipeline", GetPipelinesEndpoint).Methods("GET")
-	router.HandleFunc("/admin/pipeline", GetPipelinesAdminEndpoint).Methods("GET")
-	router.HandleFunc("/admin/pipeline/{id}", DeletePipelineAdminEndpoint).Methods("DELETE")
-	c := cors.New(
-		cors.Options{
-			AllowedHeaders: []string{"Content-Type", "Authorization"},
-			AllowedOrigins: []string{"*"},
-			AllowedMethods: []string{"GET", "PUT", "POST", "DELETE", "OPTIONS"},
+	DEBUG, err := strconv.ParseBool(GetEnv("DEBUG", "false"))
+	if err != nil {
+		log.Print("Error loading debug value")
+		DEBUG = false
+	}
+	if !DEBUG {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	r := gin.Default()
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS", "PUT"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
+	prefix := r.Group(GetEnv("ROUTE_PREFIX", ""))
+	prefix.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "pong",
 		})
-	handler := c.Handler(router)
-	logger := NewLogger(handler, "CALL")
-	log.Fatal(http.ListenAndServe(GetEnv("SERVERNAME", "")+":"+port, logger))
+	})
+	prefix.POST("/pipeline", func(c *gin.Context) {
+		var request Pipeline
+		if err := c.ShouldBindJSON(&request); err != nil {
+			log.Println(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		uuid, err := REGISTRY.SavePipeline(request, getUserId(c))
+		if err != nil {
+			log.Println(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, PipelineResponse{uuid})
+	})
+
+	prefix.PUT("/pipeline", func(c *gin.Context) {
+		var request Pipeline
+		if err := c.ShouldBindJSON(&request); err != nil {
+			log.Println(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		uuid, err := REGISTRY.UpdatePipeline(request, getUserId(c))
+		if err != nil {
+			log.Println(err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, PipelineResponse{uuid})
+	})
+
+	prefix.GET("/pipeline/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		pipe, err := REGISTRY.GetPipeline(id, getUserId(c))
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		c.JSON(http.StatusOK, pipe)
+	})
+
+	prefix.DELETE("/pipeline/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		_, err := REGISTRY.DeletePipeline(id, getUserId(c))
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.Status(http.StatusOK)
+	})
+
+	prefix.GET("/pipeline", func(c *gin.Context) {
+		args := c.Request.URL.Query()
+		pipes, err := REGISTRY.GetPipelines(getUserId(c), args)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		c.JSON(http.StatusOK, pipes)
+	})
+
+	prefix.GET("/admin/pipeline", func(c *gin.Context) {
+		args := c.Request.URL.Query()
+		pipes, err := REGISTRY.GetPipelinesAdmin(getUserId(c), args)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		c.JSON(http.StatusOK, pipes)
+	})
+
+	prefix.DELETE("/admin/pipeline/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		_, err := REGISTRY.DeletePipelineAdmin(id, getUserId(c))
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.Status(http.StatusNoContent)
+	})
+
+	if !DEBUG {
+		err = r.Run(":" + port)
+	} else {
+		err = r.Run("127.0.0.1:" + port)
+	}
+	if err == nil {
+		fmt.Printf("Starting api server failed: %s \n", err)
+	}
+}
+
+func getUserId(c *gin.Context) (userId string) {
+	forUser := c.Query("for_user")
+	if forUser != "" {
+
+		roles := strings.Split(c.GetHeader("X-User-Roles"), ", ")
+		if slices.Contains[[]string](roles, "admin") {
+			return forUser
+		}
+	}
+
+	userId = c.GetHeader("X-UserId")
+	if userId == "" {
+		if c.GetHeader("Authorization") != "" {
+			claims, err := jwt.Parse(c.GetHeader("Authorization"))
+			if err != nil {
+				return
+			}
+			userId = claims.Sub
+			if userId == "" {
+				userId = "dummy"
+			}
+		}
+	}
+	return
 }
