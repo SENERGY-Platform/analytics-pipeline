@@ -144,8 +144,10 @@ func CreateServer() {
 	} else {
 		err = r.Run("127.0.0.1:" + port)
 	}
-	if err == nil {
-		fmt.Printf("Starting api server failed: %s \n", err)
+	if err != nil {
+		log.Printf("Starting api server failed: %s \n", err)
+	} else {
+		log.Println("Server stopped without error message")
 	}
 }
 
