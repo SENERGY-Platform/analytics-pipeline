@@ -18,20 +18,21 @@ package lib
 
 import (
 	"fmt"
-	"github.com/SENERGY-Platform/service-commons/pkg/jwt"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/SENERGY-Platform/service-commons/pkg/jwt"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 var REGISTRY = NewRegistry(NewMongoRepo())
 
 func CreateServer() {
-	port := GetEnv("API_PORT", "8000")
+	port := GetEnv("SERVICE_API_PORT", "8000")
 	fmt.Print("Starting Server at port " + port + "\n")
 	DEBUG, err := strconv.ParseBool(GetEnv("DEBUG", "false"))
 	if err != nil {
