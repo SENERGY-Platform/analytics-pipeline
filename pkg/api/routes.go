@@ -27,8 +27,6 @@ var routes = gin_mw.Routes[lib.Registry]{
 	getPipeline,
 	deletePipeline,
 	getPipelines,
-	getPipelinesAdmin,
-	deletePipelineAdmin,
 	getHealthCheckH,
 	getSwaggerDocH,
 }

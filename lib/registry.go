@@ -17,8 +17,6 @@
 package lib
 
 import (
-	"context"
-	"fmt"
 	"time"
 
 	"github.com/Nerzal/gocloak/v13"
@@ -65,46 +63,13 @@ func (r *Registry) GetPipelines(userId string, args map[string][]string) (pipeli
 }
 
 func (r *Registry) GetPipelinesAdmin(userId string, args map[string][]string) (pipelines PipelinesResponse, err error) {
-	clientId := GetEnv("KEYCLOAK_CLIENT_ID", "test")
-	clientSecret := GetEnv("KEYCLOAK_CLIENT_SECRET", "test")
-	realm := GetEnv("KEYCLOAK_REALM", "test")
-
-	client := gocloak.NewClient(GetEnv("KEYCLOAK_ADDRESS", "http://test") + "/auth")
-	ctx := context.Background()
-	token, err := client.LoginClient(ctx, clientId, clientSecret, realm)
-	if err != nil {
-		fmt.Println("Login failed:" + err.Error())
-	}
-	if token != nil {
-		roles, _ := client.GetRealmRolesByUserID(ctx, token.AccessToken, realm, userId)
-		if hasRole("admin", roles) {
-			pipelines, err = r.repository.All(userId, true, args)
-		}
-	}
-	return
+	return r.repository.All(userId, true, args)
 }
 
 func (r *Registry) DeletePipelineAdmin(id string, userId string) (Response, error) {
-	clientId := GetEnv("KEYCLOAK_CLIENT_ID", "test")
-	clientSecret := GetEnv("KEYCLOAK_CLIENT_SECRET", "test")
-	realm := GetEnv("KEYCLOAK_REALM", "test")
-
-	client := gocloak.NewClient(GetEnv("KEYCLOAK_ADDRESS", "http://test") + "/auth")
-	ctx := context.Background()
-	token, err := client.LoginClient(ctx, clientId, clientSecret, realm)
+	err := r.repository.DeletePipeline(id, userId, true)
 	if err != nil {
-		fmt.Println("Login failed:" + err.Error())
 		return Response{}, err
-	}
-
-	if token != nil {
-		roles, _ := client.GetRealmRolesByUserID(ctx, token.AccessToken, realm, userId)
-		if hasRole("admin", roles) {
-			err = r.repository.DeletePipeline(id, userId, true)
-			if err != nil {
-				return Response{}, err
-			}
-		}
 	}
 	return Response{"OK"}, nil
 }

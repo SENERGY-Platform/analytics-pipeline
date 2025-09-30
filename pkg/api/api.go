@@ -85,6 +85,14 @@ func CreateServer(cfg *config.Config) (r *gin.Engine, err error) {
 	for _, route := range setRoutes {
 		util.Logger.Debug("http route", attributes.MethodKey, route[0], attributes.PathKey, route[1])
 	}
+	prefix.Use(AdminMiddleware())
+	setRoutes, err = routesAdmin.Set(*REGISTRY, prefix)
+	if err != nil {
+		return nil, err
+	}
+	for _, route := range setRoutes {
+		util.Logger.Debug("http route", attributes.MethodKey, route[0], attributes.PathKey, route[1])
+	}
 	return r, nil
 }
 
@@ -99,6 +107,44 @@ func AuthMiddleware() gin.HandlerFunc {
 		gc.Set(UserIdKey, userId)
 		gc.Next()
 	}
+}
+
+func AdminMiddleware() gin.HandlerFunc {
+	return func(gc *gin.Context) {
+		admin, err := isAdmin(gc)
+		if err != nil {
+			util.Logger.Error("could not check admin role", "error", err)
+			gc.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		if !admin {
+			util.Logger.Warn("unauthorized user tries to access admin api")
+			gc.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		gc.Set(AdminKey, true)
+		gc.Next()
+	}
+}
+
+func isAdmin(c *gin.Context) (result bool, err error) {
+	rolesHeader := c.GetHeader("X-User-Roles")
+	if rolesHeader != "" {
+		roles := strings.Split(rolesHeader, ", ")
+		if slices.Contains[[]string](roles, "admin") {
+			return true, nil
+		}
+		return false, nil
+	}
+	if c.GetHeader("Authorization") != "" {
+		var claims jwt.Token
+		claims, err = jwt.Parse(c.GetHeader("Authorization"))
+		if err != nil {
+			return
+		}
+		return claims.IsAdmin(), nil
+	}
+	return false, nil
 }
 
 func getUserId(c *gin.Context) (userId string, err error) {

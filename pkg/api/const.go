@@ -19,6 +19,7 @@ package api
 const (
 	HeaderRequestID = "X-Request-ID"
 	UserIdKey       = "UserId"
+	AdminKey        = "admin"
 )
 
 const (
