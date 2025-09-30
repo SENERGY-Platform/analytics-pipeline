@@ -2,7 +2,6 @@ package lib
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -76,7 +75,6 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 	}
 	cur, err = Mongo().Find(CTX, req, opt)
 	if err != nil {
-		log.Println(err)
 		return
 	}
 	req = bson.M{"userid": userId}
@@ -85,7 +83,6 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 	}
 	pipelines.Total, err = Mongo().CountDocuments(CTX, req)
 	if err != nil {
-		log.Println(err)
 		return
 	}
 	pipelines.Data = make([]Pipeline, 0)
@@ -94,7 +91,6 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 		var elem Pipeline
 		err = cur.Decode(&elem)
 		if err != nil {
-			log.Fatal(err)
 			return
 		}
 		pipelines.Data = append(pipelines.Data, elem)
@@ -105,7 +101,6 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 func (r *MongoRepo) FindPipeline(id string, userId string) (pipeline Pipeline, err error) {
 	err = Mongo().FindOne(CTX, bson.M{"id": id, "userid": userId}).Decode(&pipeline)
 	if err != nil {
-		log.Println(err)
 		return Pipeline{}, err
 	}
 	return pipeline, err

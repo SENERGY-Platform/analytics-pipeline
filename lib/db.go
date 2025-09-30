@@ -18,9 +18,11 @@ package lib
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 	"time"
 
+	"github.com/SENERGY-Platform/analytics-pipeline/pkg/config"
+	"github.com/SENERGY-Platform/analytics-pipeline/pkg/util"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -28,13 +30,13 @@ import (
 var DB *mongo.Client
 var CTX mongo.SessionContext
 
-func InitDB() {
+func InitDB(cfg *config.MongoConfig) {
 	CTX, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	client, err := mongo.Connect(CTX, options.Client().ApplyURI("mongodb://"+GetEnv("MONGO", "localhost")+":27017"))
+	client, err := mongo.Connect(CTX, options.Client().ApplyURI("mongodb://"+cfg.Host+":"+strconv.FormatInt(int64(cfg.Port), 10)))
 	if err != nil {
-		panic("failed to connect database: " + err.Error())
+		util.Logger.Error("failed to connect database", "error", err)
 	} else {
-		fmt.Println("Connected to DB.")
+		util.Logger.Info("connected to db")
 	}
 	DB = client
 }
@@ -46,10 +48,6 @@ func Mongo() *mongo.Collection {
 func CloseDB() {
 	err := DB.Disconnect(CTX)
 	if err != nil {
-		panic("failed to disconnect database: " + err.Error())
+		util.Logger.Error("failed to disconnect database", "error", err)
 	}
-}
-
-func GetDB() *mongo.Client {
-	return DB
 }

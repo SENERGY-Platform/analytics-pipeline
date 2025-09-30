@@ -1,0 +1,416 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "For the administration of analytics pipelines.",
+        "title": "Analytics-Pipeline API",
+        "contact": {},
+        "license": {
+            "name": "Apache-2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "0.0.14"
+    },
+    "basePath": "/",
+    "paths": {
+        "/pipeline": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieves a list of pipelines given a set of query parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pipelines"
+                ],
+                "summary": "Retrieve a list of pipelines",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Query parameters",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/lib.Pipeline"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Updates a pipeline given a pipeline request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pipelines"
+                ],
+                "summary": "Update a pipeline",
+                "parameters": [
+                    {
+                        "description": "Pipeline request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/lib.Pipeline"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/lib.PipelineResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Saves a pipeline given a pipeline request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pipelines"
+                ],
+                "summary": "Save a pipeline",
+                "parameters": [
+                    {
+                        "description": "Pipeline request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/lib.Pipeline"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/lib.PipelineResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/pipeline/:id": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieves a pipeline given a pipeline ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pipelines"
+                ],
+                "summary": "Retrieve a pipeline",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pipeline ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/lib.Pipeline"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Deletes a pipeline given a pipeline ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pipelines"
+                ],
+                "summary": "Delete a pipeline",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Pipeline ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "lib.DownstreamConfig": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "instanceID": {
+                    "type": "string"
+                }
+            }
+        },
+        "lib.InputSelection": {
+            "type": "object",
+            "properties": {
+                "aspectId": {
+                    "type": "string"
+                },
+                "characteristicIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "functionId": {
+                    "type": "string"
+                },
+                "inputName": {
+                    "description": "references mapping name",
+                    "type": "string"
+                },
+                "selectableId": {
+                    "description": "either device or group. can be used for SNRGY-1172, needed to update devices in group",
+                    "type": "string"
+                }
+            }
+        },
+        "lib.InputTopic": {
+            "type": "object",
+            "properties": {
+                "filterType": {
+                    "type": "string"
+                },
+                "filterValue": {
+                    "type": "string"
+                },
+                "mappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/lib.Mapping"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "lib.Mapping": {
+            "type": "object",
+            "properties": {
+                "dest": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                }
+            }
+        },
+        "lib.Operator": {
+            "type": "object",
+            "properties": {
+                "applicationId": {
+                    "type": "string"
+                },
+                "config": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "cost": {
+                    "type": "integer"
+                },
+                "deploymentType": {
+                    "type": "string"
+                },
+                "downstream": {
+                    "$ref": "#/definitions/lib.DownstreamConfig"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "imageId": {
+                    "type": "string"
+                },
+                "inputSelections": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/lib.InputSelection"
+                    }
+                },
+                "inputTopics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/lib.InputTopic"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "operatorId": {
+                    "type": "string"
+                },
+                "outputTopic": {
+                    "type": "string"
+                },
+                "persistData": {
+                    "type": "boolean"
+                },
+                "upstream": {
+                    "$ref": "#/definitions/lib.UpstreamConfig"
+                }
+            }
+        },
+        "lib.Pipeline": {
+            "type": "object",
+            "properties": {
+                "consumeAllMessages": {
+                    "type": "boolean"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "flowId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "mergeStrategy": {
+                    "type": "string"
+                },
+                "metrics": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "operators": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/lib.Operator"
+                    }
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "windowTime": {
+                    "type": "integer"
+                }
+            }
+        },
+        "lib.PipelineResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "lib.UpstreamConfig": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                }
+            }
+        }
+    }
+}

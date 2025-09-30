@@ -2,3 +2,4 @@
 vendor
 .env
 analytics-pipeline
+config.json

@@ -19,10 +19,11 @@ package client
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/SENERGY-Platform/analytics-pipeline/lib"
-	"github.com/google/uuid"
 	"net/http"
 	"strconv"
+
+	"github.com/SENERGY-Platform/analytics-pipeline/lib"
+	"github.com/google/uuid"
 )
 
 func (c *Client) SavePipeline(token string, userId string, pipeline lib.Pipeline) (id uuid.UUID, err error, code int) {

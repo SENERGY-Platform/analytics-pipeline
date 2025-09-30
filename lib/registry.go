@@ -19,8 +19,9 @@ package lib
 import (
 	"context"
 	"fmt"
-	"github.com/Nerzal/gocloak/v13"
 	"time"
+
+	"github.com/Nerzal/gocloak/v13"
 
 	"github.com/google/uuid"
 )
@@ -101,7 +102,6 @@ func (r *Registry) DeletePipelineAdmin(id string, userId string) (Response, erro
 		if hasRole("admin", roles) {
 			err = r.repository.DeletePipeline(id, userId, true)
 			if err != nil {
-				fmt.Println("Could not delete pipeline record: " + err.Error())
 				return Response{}, err
 			}
 		}
@@ -115,9 +115,6 @@ func (r *Registry) GetPipeline(id string, userId string) (pipeline Pipeline, err
 
 func (r *Registry) DeletePipeline(id string, userId string) (Response, error) {
 	err := r.repository.DeletePipeline(id, userId, false)
-	if err != nil {
-		fmt.Println("Could not delete pipeline record: " + err.Error())
-	}
 	return Response{"OK"}, err
 }
 
