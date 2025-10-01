@@ -19,8 +19,6 @@ package lib
 import (
 	"time"
 
-	"github.com/Nerzal/gocloak/v13"
-
 	"github.com/google/uuid"
 )
 
@@ -81,13 +79,4 @@ func (r *Registry) GetPipeline(id string, userId string) (pipeline Pipeline, err
 func (r *Registry) DeletePipeline(id string, userId string) (Response, error) {
 	err := r.repository.DeletePipeline(id, userId, false)
 	return Response{"OK"}, err
-}
-
-func hasRole(test string, list []*gocloak.Role) bool {
-	for _, role := range list {
-		if *role.Name == test {
-			return true
-		}
-	}
-	return false
 }
