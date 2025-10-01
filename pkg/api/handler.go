@@ -38,17 +38,17 @@ import (
 // @Router /pipeline [post]
 // @Security Bearer
 func postPipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
-	return http.MethodPost, "/pipeline", func(c *gin.Context) {
+	return http.MethodPost, PipelinePath, func(c *gin.Context) {
 		var request lib.Pipeline
 		if err := c.ShouldBindJSON(&request); err != nil {
-			util.Logger.Error("error parsing request", "error", err, "method", "POST", "path", "/pipeline")
-			_ = c.Error(errors.New("something went wrong"))
+			util.Logger.Error("error parsing request", "error", err, "method", "POST", "path", PipelinePath)
+			_ = c.Error(errors.New(MessageSomethingWrong))
 			return
 		}
 		uuid, err := registry.SavePipeline(request, c.GetString(UserIdKey))
 		if err != nil {
-			util.Logger.Error("could not get save pipeline", "error", err, "method", "POST", "path", "/pipeline")
-			_ = c.Error(errors.New("something went wrong"))
+			util.Logger.Error("could not get save pipeline", "error", err, "method", "POST", "path", PipelinePath)
+			_ = c.Error(errors.New(MessageSomethingWrong))
 			return
 		}
 		c.JSON(http.StatusOK, lib.PipelineResponse{Id: uuid})
@@ -67,17 +67,17 @@ func postPipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
 // @Router /pipeline [put]
 // @Security Bearer
 func putPipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
-	return http.MethodPut, "/pipeline", func(c *gin.Context) {
+	return http.MethodPut, PipelinePath, func(c *gin.Context) {
 		var request lib.Pipeline
 		if err := c.ShouldBindJSON(&request); err != nil {
-			util.Logger.Error("error parsing request", "error", err, "method", "POST", "path", "/pipeline")
-			_ = c.Error(errors.New("something went wrong"))
+			util.Logger.Error("error parsing request", "error", err, "method", "POST", "path", PipelinePath)
+			_ = c.Error(errors.New(MessageSomethingWrong))
 			return
 		}
 		uuid, err := registry.UpdatePipeline(request, c.GetString(UserIdKey))
 		if err != nil {
-			util.Logger.Error("could not get save pipeline", "error", err, "method", "POST", "path", "/pipeline")
-			_ = c.Error(errors.New("something went wrong"))
+			util.Logger.Error("could not get save pipeline", "error", err, "method", "POST", "path", PipelinePath)
+			_ = c.Error(errors.New(MessageSomethingWrong))
 			return
 		}
 		c.JSON(http.StatusOK, lib.PipelineResponse{Id: uuid})
@@ -101,7 +101,7 @@ func getPipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
 		pipe, err := registry.GetPipeline(id, c.GetString(UserIdKey))
 		if err != nil {
 			util.Logger.Error("could not get pipeline", "error", err, "method", "GET", "path", "/pipeline/"+id)
-			_ = c.Error(errors.New("something went wrong"))
+			_ = c.Error(errors.New(MessageSomethingWrong))
 			return
 		}
 		c.JSON(http.StatusOK, pipe)
@@ -125,7 +125,7 @@ func deletePipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
 		_, err := registry.DeletePipeline(id, c.GetString(UserIdKey))
 		if err != nil {
 			util.Logger.Error("could not delete pipeline", "error", err, "method", "DELETE", "path", "/pipeline/"+id)
-			_ = c.Error(errors.New("something went wrong"))
+			_ = c.Error(errors.New(MessageSomethingWrong))
 			return
 		}
 		c.Status(http.StatusOK)
@@ -144,12 +144,12 @@ func deletePipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
 // @Router /pipeline [get]
 // @Security Bearer
 func getPipelines(registry lib.Registry) (string, string, gin.HandlerFunc) {
-	return http.MethodGet, "/pipeline", func(c *gin.Context) {
+	return http.MethodGet, PipelinePath, func(c *gin.Context) {
 		args := c.Request.URL.Query()
 		pipes, err := registry.GetPipelines(c.GetString(UserIdKey), args)
 		if err != nil {
-			util.Logger.Error("could not get pipelines", "error", err, "method", "GET", "path", "/pipeline")
-			_ = c.Error(errors.New("something went wrong"))
+			util.Logger.Error("could not get pipelines", "error", err, "method", "GET", "path", PipelinePath)
+			_ = c.Error(errors.New(MessageSomethingWrong))
 			return
 		}
 		c.JSON(http.StatusOK, pipes)
@@ -162,7 +162,7 @@ func getPipelinesAdmin(registry lib.Registry) (string, string, gin.HandlerFunc) 
 		pipes, err := registry.GetPipelinesAdmin(c.GetString(UserIdKey), args)
 		if err != nil {
 			util.Logger.Error("could not get pipelines for admin", "error", err, "method", "GET", "path", "/admin/pipeline/")
-			_ = c.Error(errors.New("something went wrong"))
+			_ = c.Error(errors.New(MessageSomethingWrong))
 			return
 		}
 		c.JSON(http.StatusOK, pipes)
@@ -175,7 +175,7 @@ func deletePipelineAdmin(registry lib.Registry) (string, string, gin.HandlerFunc
 		_, err := registry.DeletePipelineAdmin(id, c.GetString(UserIdKey))
 		if err != nil {
 			util.Logger.Error("could not delete pipeline for admin", "error", err, "method", "DELETE", "path", "/admin/pipeline/"+id)
-			_ = c.Error(errors.New("something went wrong"))
+			_ = c.Error(errors.New(MessageSomethingWrong))
 			return
 		}
 		c.Status(http.StatusNoContent)

@@ -22,11 +22,6 @@ import (
 )
 
 var routes = gin_mw.Routes[lib.Registry]{
-	postPipeline,
-	putPipeline,
-	getPipeline,
-	deletePipeline,
-	getPipelines,
 	getHealthCheckH,
 	getSwaggerDocH,
 }

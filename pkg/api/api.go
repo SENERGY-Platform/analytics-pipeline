@@ -17,6 +17,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"slices"
 	"strconv"
@@ -38,7 +39,7 @@ import (
 // It also sets up the routes for the API using the given registry.
 // The server is started at the port specified in the config.
 // @title Analytics-Pipeline API
-// @version 0.0.14
+// @version 0.0.15
 // @description For the administration of analytics pipelines.
 // @license.name Apache-2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
@@ -72,7 +73,6 @@ func CreateServer(cfg *config.Config) (r *gin.Engine, err error) {
 	middleware = append(middleware,
 		requestid.New(requestid.WithCustomHeaderStrKey(HeaderRequestID)),
 		gin_mw.StructRecoveryHandler(util.Logger, gin_mw.DefaultRecoveryFunc),
-		AuthMiddleware(),
 	)
 	r.Use(middleware...)
 	r.UseRawPath = true
@@ -85,6 +85,16 @@ func CreateServer(cfg *config.Config) (r *gin.Engine, err error) {
 	for _, route := range setRoutes {
 		util.Logger.Debug("http route", attributes.MethodKey, route[0], attributes.PathKey, route[1])
 	}
+
+	prefix.Use(AuthMiddleware())
+	setRoutes, err = routesAuth.Set(*REGISTRY, prefix)
+	if err != nil {
+		return nil, err
+	}
+	for _, route := range setRoutes {
+		util.Logger.Debug("http route", attributes.MethodKey, route[0], attributes.PathKey, route[1])
+	}
+
 	prefix.Use(AdminMiddleware())
 	setRoutes, err = routesAdmin.Set(*REGISTRY, prefix)
 	if err != nil {
@@ -165,6 +175,8 @@ func getUserId(c *gin.Context) (userId string, err error) {
 				return
 			}
 			userId = claims.Sub
+		} else {
+			err = errors.New("missing authorization and x-userid header")
 		}
 	}
 	return

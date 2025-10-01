@@ -16,17 +16,15 @@
 
 package api
 
-const (
-	HeaderRequestID = "X-Request-ID"
-	UserIdKey       = "UserId"
-	AdminKey        = "admin"
+import (
+	"github.com/SENERGY-Platform/analytics-pipeline/lib"
+	gin_mw "github.com/SENERGY-Platform/gin-middleware"
 )
 
-const (
-	HealthCheckPath = "/health-check"
-	PipelinePath    = "/pipeline"
-)
-
-const (
-	MessageSomethingWrong = "something went wrong"
-)
+var routesAuth = gin_mw.Routes[lib.Registry]{
+	postPipeline,
+	putPipeline,
+	getPipeline,
+	deletePipeline,
+	getPipelines,
+}
