@@ -39,7 +39,7 @@ import (
 // It also sets up the routes for the API using the given registry.
 // The server is started at the port specified in the config.
 // @title Analytics-Pipeline API
-// @version 0.0.15
+// @version 0.0.16
 // @description For the administration of analytics pipelines.
 // @license.name Apache-2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
@@ -72,6 +72,9 @@ func CreateServer(cfg *config.Config) (r *gin.Engine, err error) {
 	)
 	middleware = append(middleware,
 		requestid.New(requestid.WithCustomHeaderStrKey(HeaderRequestID)),
+		gin_mw.ErrorHandler(func(err error) int {
+			return 0
+		}, ", "),
 		gin_mw.StructRecoveryHandler(util.Logger, gin_mw.DefaultRecoveryFunc),
 	)
 	r.Use(middleware...)
