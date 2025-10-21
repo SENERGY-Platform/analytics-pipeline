@@ -79,10 +79,11 @@ type Operator struct {
 }
 
 type InputTopic struct {
-	Name        string    `json:"name,omitempty"`
-	FilterType  string    `json:"filterType,omitempty"`
-	FilterValue string    `json:"filterValue,omitempty"`
-	Mappings    []Mapping `json:"mappings,omitempty"`
+	Name         string    `json:"name,omitempty"`
+	FilterType   string    `json:"filterType,omitempty"`
+	FilterValue  string    `json:"filterValue,omitempty"`
+	FilterValue2 string    `json:"filterValue2,omitempty"`
+	Mappings     []Mapping `json:"mappings,omitempty"`
 }
 
 type Mapping struct {
