@@ -2,6 +2,7 @@ package lib
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -62,7 +63,10 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 			if ord[1] == "desc" {
 				order = -1
 			}
-			opt.SetSort(bson.M{ord[0]: int64(order)})
+			sortFields := []string{"name", "id", "createdat", "updatedat"}
+			if slices.Contains(sortFields, ord[0]) {
+				opt.SetSort(bson.M{ord[0]: int64(order)})
+			}
 		}
 	}
 	var cur *mongo.Cursor
