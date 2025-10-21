@@ -58,6 +58,7 @@ type UpstreamConfig struct {
 type DownstreamConfig struct {
 	Enabled    bool
 	InstanceID string
+	ServiceID  string
 }
 
 type Operator struct {
