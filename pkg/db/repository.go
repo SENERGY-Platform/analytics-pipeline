@@ -1,4 +1,20 @@
-package lib
+/*
+ * Copyright 2025 InfAI (CC SES)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package db
 
 import (
 	"fmt"
@@ -6,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SENERGY-Platform/analytics-pipeline/lib"
 	"github.com/globalsign/mgo/bson"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,10 +30,10 @@ import (
 )
 
 type PipelineRepository interface {
-	InsertPipeline(pipeline Pipeline) (err error)
-	UpdatePipeline(pipeline Pipeline, userId string) (err error)
-	All(userId string, admin bool, args map[string][]string) (pipelines PipelinesResponse, err error)
-	FindPipeline(id string, userId string) (pipeline Pipeline, err error)
+	InsertPipeline(pipeline lib.Pipeline) (err error)
+	UpdatePipeline(pipeline lib.Pipeline, userId string) (err error)
+	All(userId string, admin bool, args map[string][]string) (pipelines lib.PipelinesResponse, err error)
+	FindPipeline(id string, userId string) (pipeline lib.Pipeline, err error)
 	DeletePipeline(id string, userId string, admin bool) (err error)
 }
 
@@ -27,7 +44,7 @@ func NewMongoRepo() *MongoRepo {
 	return &MongoRepo{}
 }
 
-func (r *MongoRepo) InsertPipeline(pipeline Pipeline) (err error) {
+func (r *MongoRepo) InsertPipeline(pipeline lib.Pipeline) (err error) {
 	_, err = Mongo().InsertOne(CTX, pipeline)
 	if err != nil {
 		fmt.Println(err)
@@ -36,7 +53,7 @@ func (r *MongoRepo) InsertPipeline(pipeline Pipeline) (err error) {
 	return nil
 }
 
-func (r *MongoRepo) UpdatePipeline(pipeline Pipeline, userId string) (err error) {
+func (r *MongoRepo) UpdatePipeline(pipeline lib.Pipeline, userId string) (err error) {
 	_, err = Mongo().ReplaceOne(CTX, bson.M{"id": pipeline.Id, "userid": userId}, pipeline)
 
 	if err != nil {
@@ -46,7 +63,7 @@ func (r *MongoRepo) UpdatePipeline(pipeline Pipeline, userId string) (err error)
 	return nil
 }
 
-func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pipelines PipelinesResponse, err error) {
+func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pipelines lib.PipelinesResponse, err error) {
 	opt := options.Find()
 	for arg, value := range args {
 		if arg == "limit" {
@@ -89,10 +106,10 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 	if err != nil {
 		return
 	}
-	pipelines.Data = make([]Pipeline, 0)
+	pipelines.Data = make([]lib.Pipeline, 0)
 	for cur.Next(CTX) {
 		// create a value into which the single document can be decoded
-		var elem Pipeline
+		var elem lib.Pipeline
 		err = cur.Decode(&elem)
 		if err != nil {
 			return
@@ -102,10 +119,10 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string) (pi
 	return
 }
 
-func (r *MongoRepo) FindPipeline(id string, userId string) (pipeline Pipeline, err error) {
+func (r *MongoRepo) FindPipeline(id string, userId string) (pipeline lib.Pipeline, err error) {
 	err = Mongo().FindOne(CTX, bson.M{"id": id, "userid": userId}).Decode(&pipeline)
 	if err != nil {
-		return Pipeline{}, err
+		return lib.Pipeline{}, err
 	}
 	return pipeline, err
 }
@@ -126,22 +143,22 @@ func NewMockRepo() *MockRepo {
 	return &MockRepo{}
 }
 
-func (r *MockRepo) InsertPipeline(Pipeline) (err error) {
+func (r *MockRepo) InsertPipeline(_ lib.Pipeline) (err error) {
 	return
 }
 
-func (r *MockRepo) UpdatePipeline(Pipeline, string) (err error) {
+func (r *MockRepo) UpdatePipeline(_ lib.Pipeline, _ string) (err error) {
 	return
 }
 
-func (r *MockRepo) All(string, bool, map[string][]string) (pipelines PipelinesResponse, err error) {
+func (r *MockRepo) All(_ string, _ bool, _ map[string][]string) (pipelines lib.PipelinesResponse, err error) {
 	return
 }
 
-func (r *MockRepo) FindPipeline(string, string) (pipeline Pipeline, err error) {
+func (r *MockRepo) FindPipeline(_ string, _ string) (pipeline lib.Pipeline, err error) {
 	return
 }
 
-func (r *MockRepo) DeletePipeline(string, string, bool) (err error) {
+func (r *MockRepo) DeletePipeline(_ string, _ string, _ bool) (err error) {
 	return
 }

@@ -27,9 +27,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/SENERGY-Platform/analytics-pipeline/lib"
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/api"
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/config"
+	"github.com/SENERGY-Platform/analytics-pipeline/pkg/db"
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/util"
 	"github.com/SENERGY-Platform/go-service-base/srv-info-hdl"
 	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
@@ -60,8 +60,8 @@ func main() {
 	util.Logger.Info(srvInfoHdl.Name(), "version", srvInfoHdl.Version())
 	util.Logger.Info("config: " + sb_util.ToJsonStr(cfg))
 
-	lib.InitDB(&cfg.Mongo)
-	defer lib.CloseDB()
+	db.InitDB(&cfg.Mongo)
+	defer db.CloseDB()
 	httpHandler, err := api.CreateServer(cfg)
 	if err != nil {
 		util.Logger.Error("error creating http engine", "error", err)

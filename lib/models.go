@@ -89,15 +89,6 @@ type Mapping struct {
 	Source string `json:"source,omitempty"`
 }
 
-type Claims struct {
-	Sub         string              `json:"sub,omitempty"`
-	RealmAccess map[string][]string `json:"realm_access,omitempty"`
-}
-
-func (c Claims) Valid() error {
-	return nil
-}
-
 type InputSelection struct {
 	InputName         string   `json:"inputName,omitempty"` // references mapping name
 	AspectId          string   `json:"aspectId,omitempty"`

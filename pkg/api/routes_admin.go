@@ -17,11 +17,11 @@
 package api
 
 import (
-	"github.com/SENERGY-Platform/analytics-pipeline/lib"
+	"github.com/SENERGY-Platform/analytics-pipeline/pkg/service"
 	gin_mw "github.com/SENERGY-Platform/gin-middleware"
 )
 
-var routesAdmin = gin_mw.Routes[lib.Registry]{
+var routesAdmin = gin_mw.Routes[service.Registry]{
 	getPipelinesAdmin,
 	deletePipelineAdmin,
 }

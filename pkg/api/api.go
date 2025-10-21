@@ -23,8 +23,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SENERGY-Platform/analytics-pipeline/lib"
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/config"
+	"github.com/SENERGY-Platform/analytics-pipeline/pkg/db"
+	"github.com/SENERGY-Platform/analytics-pipeline/pkg/service"
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/util"
 	gin_mw "github.com/SENERGY-Platform/gin-middleware"
 	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
@@ -80,7 +81,7 @@ func CreateServer(cfg *config.Config) (r *gin.Engine, err error) {
 	r.Use(middleware...)
 	r.UseRawPath = true
 	prefix := r.Group(cfg.URLPrefix)
-	REGISTRY := lib.NewRegistry(lib.NewMongoRepo())
+	REGISTRY := service.NewRegistry(db.NewMongoRepo())
 	setRoutes, err := routes.Set(*REGISTRY, prefix)
 	if err != nil {
 		return nil, err

@@ -22,6 +22,7 @@ import (
 	"os"
 
 	"github.com/SENERGY-Platform/analytics-pipeline/lib"
+	"github.com/SENERGY-Platform/analytics-pipeline/pkg/service"
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/util"
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +38,7 @@ import (
 // @Failure 500 {string} string
 // @Router /pipeline [post]
 // @Security Bearer
-func postPipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
+func postPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodPost, PipelinePath, func(c *gin.Context) {
 		var request lib.Pipeline
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -66,7 +67,7 @@ func postPipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
 // @Failure 500 {string} string
 // @Router /pipeline [put]
 // @Security Bearer
-func putPipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
+func putPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodPut, PipelinePath, func(c *gin.Context) {
 		var request lib.Pipeline
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -95,7 +96,7 @@ func putPipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
 // @Failure 500 {string} string
 // @Router /pipeline/:id [get]
 // @Security Bearer
-func getPipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
+func getPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, "/pipeline/:id", func(c *gin.Context) {
 		id := c.Param("id")
 		pipe, err := registry.GetPipeline(id, c.GetString(UserIdKey))
@@ -119,7 +120,7 @@ func getPipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
 // @Failure 500 {string} string
 // @Router /pipeline/:id [delete]
 // @Security Bearer
-func deletePipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
+func deletePipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodDelete, "/pipeline/:id", func(c *gin.Context) {
 		id := c.Param("id")
 		_, err := registry.DeletePipeline(id, c.GetString(UserIdKey))
@@ -143,7 +144,7 @@ func deletePipeline(registry lib.Registry) (string, string, gin.HandlerFunc) {
 // @Failure 500 {string} string
 // @Router /pipeline [get]
 // @Security Bearer
-func getPipelines(registry lib.Registry) (string, string, gin.HandlerFunc) {
+func getPipelines(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, PipelinePath, func(c *gin.Context) {
 		args := c.Request.URL.Query()
 		pipes, err := registry.GetPipelines(c.GetString(UserIdKey), args)
@@ -156,7 +157,7 @@ func getPipelines(registry lib.Registry) (string, string, gin.HandlerFunc) {
 	}
 }
 
-func getPipelinesAdmin(registry lib.Registry) (string, string, gin.HandlerFunc) {
+func getPipelinesAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, "/admin/pipeline", func(c *gin.Context) {
 		args := c.Request.URL.Query()
 		pipes, err := registry.GetPipelinesAdmin(c.GetString(UserIdKey), args)
@@ -169,7 +170,7 @@ func getPipelinesAdmin(registry lib.Registry) (string, string, gin.HandlerFunc) 
 	}
 }
 
-func deletePipelineAdmin(registry lib.Registry) (string, string, gin.HandlerFunc) {
+func deletePipelineAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodDelete, "/admin/pipeline/:id", func(c *gin.Context) {
 		id := c.Param("id")
 		_, err := registry.DeletePipelineAdmin(id, c.GetString(UserIdKey))
@@ -182,13 +183,13 @@ func deletePipelineAdmin(registry lib.Registry) (string, string, gin.HandlerFunc
 	}
 }
 
-func getHealthCheckH(_ lib.Registry) (string, string, gin.HandlerFunc) {
+func getHealthCheckH(_ service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, HealthCheckPath, func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	}
 }
 
-func getSwaggerDocH(_ lib.Registry) (string, string, gin.HandlerFunc) {
+func getSwaggerDocH(_ service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, "/doc", func(gc *gin.Context) {
 		if _, err := os.Stat("docs/swagger.json"); err != nil {
 			_ = gc.Error(err)
