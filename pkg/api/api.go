@@ -40,7 +40,7 @@ import (
 // It also sets up the routes for the API using the given registry.
 // The server is started at the port specified in the config.
 // @title Analytics-Pipeline API
-// @version 0.0.19
+// @version 0.0.20
 // @description For the administration of analytics pipelines.
 // @license.name Apache-2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
