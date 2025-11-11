@@ -36,18 +36,18 @@ type PipelinesResponse struct {
 }
 
 type Pipeline struct {
-	Id                 string    `bson:"id" json:"id"`
-	Name               string    `json:"name,omitempty"`
-	Description        string    `json:"description,omitempty"`
-	FlowId             string    `json:"flowId,omitempty"`
-	Image              string    `json:"image,omitempty"`
-	WindowTime         int       `json:"windowTime,omitempty"`
-	MergeStrategy      string    `json:"mergeStrategy,omitempty"`
-	ConsumeAllMessages bool      `json:"consumeAllMessages,omitempty"`
-	Metrics            bool      `json:"metrics,omitempty"`
-	CreatedAt          time.Time `json:"createdAt,omitempty"`
-	UpdatedAt          time.Time `json:"updatedAt,omitempty"`
-	UserId             string
+	Id                 string     `bson:"id" json:"id"`
+	Name               string     `json:"name,omitempty"`
+	Description        string     `json:"description,omitempty"`
+	FlowId             string     `json:"flowId,omitempty"`
+	Image              string     `json:"image,omitempty"`
+	WindowTime         int        `json:"windowTime,omitempty"`
+	MergeStrategy      string     `json:"mergeStrategy,omitempty"`
+	ConsumeAllMessages bool       `json:"consumeAllMessages,omitempty"`
+	Metrics            bool       `json:"metrics,omitempty"`
+	CreatedAt          time.Time  `json:"createdAt,omitempty"`
+	UpdatedAt          time.Time  `json:"updatedAt,omitempty"`
+	UserId             string     `json:"userId,omitempty"`
 	Operators          []Operator `json:"operators,omitempty"`
 }
 
