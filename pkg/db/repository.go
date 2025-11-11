@@ -86,6 +86,10 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string, ids
 			}
 		}
 	}
+
+	if ids == nil {
+		ids = []string{}
+	}
 	var cur *mongo.Cursor
 	req := bson.M{
 		"$or": []interface{}{
