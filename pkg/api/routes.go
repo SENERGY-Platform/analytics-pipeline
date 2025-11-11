@@ -25,3 +25,17 @@ var routes = gin_mw.Routes[service.Registry]{
 	getHealthCheckH,
 	getSwaggerDocH,
 }
+
+var routesAuth = gin_mw.Routes[service.Registry]{
+	postPipeline,
+	putPipeline,
+	getPipeline,
+	deletePipeline,
+	getPipelines,
+}
+
+var routesAdmin = gin_mw.Routes[service.Registry]{
+	getPipelinesAdmin,
+	deletePipelineAdmin,
+	getPipelinesStatisticsAdmin,
+}

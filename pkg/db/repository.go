@@ -17,13 +17,14 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/SENERGY-Platform/analytics-pipeline/lib"
-	"github.com/globalsign/mgo/bson"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -35,6 +36,7 @@ type PipelineRepository interface {
 	All(userId string, admin bool, args map[string][]string) (pipelines lib.PipelinesResponse, err error)
 	FindPipeline(id string, userId string) (pipeline lib.Pipeline, err error)
 	DeletePipeline(id string, userId string, admin bool) (err error)
+	Statistics(userId string, admin bool, args map[string][]string) (statistics lib.PipelineStatistics, err error)
 }
 
 type MongoRepo struct {
@@ -134,6 +136,65 @@ func (r *MongoRepo) DeletePipeline(id string, userId string, admin bool) (err er
 	}
 	res := Mongo().FindOneAndDelete(CTX, req)
 	return res.Err()
+}
+
+func (r *MongoRepo) Statistics(_ string, _ bool, _ map[string][]string) (statistics lib.PipelineStatistics, err error) {
+	pipeline := mongo.Pipeline{
+		{
+			{"$group", bson.D{
+				{"_id", "$userid"},
+				{"count", bson.D{{"$sum", 1}}},
+			}},
+		},
+		{
+			{"$sort", bson.D{
+				{"count", -1},
+			}},
+		},
+	}
+
+	aggregate, err := Mongo().Aggregate(CTX, pipeline)
+	if err != nil {
+		return
+	}
+	defer func(aggregate *mongo.Cursor, ctx context.Context) {
+		err = aggregate.Close(ctx)
+		if err != nil {
+			return
+		}
+	}(aggregate, CTX)
+
+	if err = aggregate.All(CTX, &statistics.PipelineUserCount); err != nil {
+		return
+	}
+
+	pipeline = mongo.Pipeline{
+		{{"$unwind", "$operators"}},
+
+		{{"$group", bson.D{
+			{"_id", "$operators.id"},
+			{"count", bson.D{{"$sum", 1}}},
+			{"pipelineIds", bson.D{{"$addToSet", "$id"}}},
+		}}},
+
+		{{"$sort", bson.D{{"count", -1}}}},
+	}
+
+	aggregate, err = Mongo().Aggregate(CTX, pipeline)
+	if err != nil {
+		return
+	}
+	defer func(aggregate *mongo.Cursor, ctx context.Context) {
+		err = aggregate.Close(ctx)
+		if err != nil {
+			return
+		}
+	}(aggregate, CTX)
+
+	if err = aggregate.All(CTX, &statistics.OperatorUsage); err != nil {
+		return
+	}
+	return
 }
 
 type MockRepo struct {

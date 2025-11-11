@@ -170,6 +170,19 @@ func getPipelinesAdmin(registry service.Registry) (string, string, gin.HandlerFu
 	}
 }
 
+func getPipelinesStatisticsAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
+	return http.MethodGet, "/admin/pipeline/statistics", func(c *gin.Context) {
+		args := c.Request.URL.Query()
+		statistics, err := registry.GetPipelinesStatisticsAdmin(c.GetString(UserIdKey), args)
+		if err != nil {
+			util.Logger.Error("could not get pipelines statistics for admin", "error", err, "method", "GET", "path", "/admin/pipeline/statistics")
+			_ = c.Error(errors.New(MessageSomethingWrong))
+			return
+		}
+		c.JSON(http.StatusOK, statistics)
+	}
+}
+
 func deletePipelineAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodDelete, "/admin/pipeline/:id", func(c *gin.Context) {
 		id := c.Param("id")

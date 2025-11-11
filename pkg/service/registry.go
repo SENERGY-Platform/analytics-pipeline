@@ -66,6 +66,10 @@ func (r *Registry) GetPipelinesAdmin(userId string, args map[string][]string) (p
 	return r.repository.All(userId, true, args)
 }
 
+func (r *Registry) GetPipelinesStatisticsAdmin(userId string, args map[string][]string) (statistics lib.PipelineStatistics, err error) {
+	return r.repository.Statistics(userId, true, args)
+}
+
 func (r *Registry) DeletePipelineAdmin(id string, userId string) (lib.Response, error) {
 	err := r.repository.DeletePipeline(id, userId, true)
 	if err != nil {

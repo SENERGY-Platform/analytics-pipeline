@@ -98,3 +98,18 @@ type InputSelection struct {
 	CharacteristicIds []string `json:"characteristicIds,omitempty"`
 	SelectableId      string   `json:"selectableId,omitempty"` // either device or group. can be used for SNRGY-1172, needed to update devices in group
 }
+type PipelineStatistics struct {
+	PipelineUserCount []PipelineUserCount `json:"pipelineUserCount,omitempty" bson:"pipelineUserCount"`
+	OperatorUsage     []OperatorUsage     `json:"operatorUsage,omitempty" bson:"operatorUsage"`
+}
+
+type PipelineUserCount struct {
+	UserId string `json:"userId,omitempty" bson:"_id"`
+	Count  int64  `json:"count,omitempty" bson:"count"`
+}
+
+type OperatorUsage struct {
+	OperatorID  string   `json:"operatorId,omitempty" bson:"_id"`
+	Count       int32    `json:"count,omitempty" bson:"count"`
+	PipelineIds []string `json:"pipelineIds,omitempty" bson:"pipelineIds"`
+}
