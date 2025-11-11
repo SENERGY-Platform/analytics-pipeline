@@ -227,3 +227,10 @@ func (r *MockRepo) FindPipeline(_ string, _ string) (pipeline lib.Pipeline, err 
 func (r *MockRepo) DeletePipeline(_ string, _ string, _ bool) (err error) {
 	return
 }
+
+func (r *MockRepo) PipelineUserCount(userId string, admin bool, args map[string][]string) (statistics []lib.PipelineUserCount, err error) {
+	return
+}
+func (r *MockRepo) OperatorUsage(userId string, admin bool, args map[string][]string) (statistics []lib.OperatorUsage, err error) {
+	return
+}
