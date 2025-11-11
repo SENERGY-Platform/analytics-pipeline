@@ -14,20 +14,10 @@
  * limitations under the License.
  */
 
-package api
+package service
+
+const PermV2InstanceTopic = "analytics-pipelines"
 
 const (
-	HeaderRequestID     = "X-Request-ID"
-	HeaderAuthorization = "Authorization"
-	UserIdKey           = "UserId"
-	AdminKey            = "admin"
-)
-
-const (
-	HealthCheckPath = "/health-check"
-	PipelinePath    = "/pipeline"
-)
-
-const (
-	MessageSomethingWrong = "something went wrong"
+	MessageMissingRights = "requested instance nonexistent or missing rights"
 )

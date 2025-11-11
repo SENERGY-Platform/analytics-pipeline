@@ -75,7 +75,7 @@ func putPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 			_ = c.Error(errors.New(MessageSomethingWrong))
 			return
 		}
-		uuid, err := registry.UpdatePipeline(request, c.GetString(UserIdKey))
+		uuid, err := registry.UpdatePipeline(request, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
 		if err != nil {
 			util.Logger.Error("could not get save pipeline", "error", err, "method", "POST", "path", PipelinePath)
 			_ = c.Error(errors.New(MessageSomethingWrong))
@@ -99,7 +99,7 @@ func putPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 func getPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, "/pipeline/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		pipe, err := registry.GetPipeline(id, c.GetString(UserIdKey))
+		pipe, err := registry.GetPipeline(id, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
 		if err != nil {
 			util.Logger.Error("could not get pipeline", "error", err, "method", "GET", "path", "/pipeline/"+id)
 			_ = c.Error(errors.New(MessageSomethingWrong))
@@ -123,7 +123,7 @@ func getPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 func deletePipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodDelete, "/pipeline/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		_, err := registry.DeletePipeline(id, c.GetString(UserIdKey))
+		err := registry.DeletePipeline(id, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
 		if err != nil {
 			util.Logger.Error("could not delete pipeline", "error", err, "method", "DELETE", "path", "/pipeline/"+id)
 			_ = c.Error(errors.New(MessageSomethingWrong))
@@ -147,7 +147,7 @@ func deletePipeline(registry service.Registry) (string, string, gin.HandlerFunc)
 func getPipelines(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, PipelinePath, func(c *gin.Context) {
 		args := c.Request.URL.Query()
-		pipes, err := registry.GetPipelines(c.GetString(UserIdKey), args)
+		pipes, err := registry.GetPipelines(c.GetString(UserIdKey), args, c.GetHeader(HeaderAuthorization))
 		if err != nil {
 			util.Logger.Error("could not get pipelines", "error", err, "method", "GET", "path", PipelinePath)
 			_ = c.Error(errors.New(MessageSomethingWrong))

@@ -27,11 +27,12 @@ type MongoConfig struct {
 	Port int    `json:"port" env_var:"MONGO_PORT"`
 }
 type Config struct {
-	Logger     LoggerConfig `json:"logger" env_var:"LOGGER_CONFIG"`
-	ServerPort int          `json:"server_port" env_var:"SERVER_PORT"`
-	Debug      bool         `json:"debug" env_var:"DEBUG"`
-	URLPrefix  string       `json:"url_prefix" env_var:"URL_PREFIX"`
-	Mongo      MongoConfig  `json:"mongo" env_var:"MONGO_CONFIG"`
+	Logger           LoggerConfig `json:"logger" env_var:"LOGGER_CONFIG"`
+	ServerPort       int          `json:"server_port" env_var:"SERVER_PORT"`
+	Debug            bool         `json:"debug" env_var:"DEBUG"`
+	URLPrefix        string       `json:"url_prefix" env_var:"URL_PREFIX"`
+	Mongo            MongoConfig  `json:"mongo" env_var:"MONGO_CONFIG"`
+	PermissionsV2Url string       `json:"permissions_v2_url" env_var:"PERMISSIONS_V2_URL"`
 }
 
 func New(path string) (*Config, error) {
@@ -41,6 +42,7 @@ func New(path string) (*Config, error) {
 		Logger: LoggerConfig{
 			Level: "info",
 		},
+		PermissionsV2Url: "http://permv2.permissions:8080",
 		Mongo: MongoConfig{
 			Host: "localhost",
 			Port: 27017,

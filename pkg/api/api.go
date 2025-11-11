@@ -29,6 +29,7 @@ import (
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/util"
 	gin_mw "github.com/SENERGY-Platform/gin-middleware"
 	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
+	permV2Client "github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/SENERGY-Platform/service-commons/pkg/jwt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/requestid"
@@ -45,7 +46,7 @@ import (
 // @license.name Apache-2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 // @BasePath /
-func CreateServer(cfg *config.Config) (r *gin.Engine, err error) {
+func CreateServer(cfg *config.Config, perm permV2Client.Client) (r *gin.Engine, err error) {
 	port := strconv.FormatInt(int64(cfg.ServerPort), 10)
 	util.Logger.Info("Starting api server at port " + port)
 
@@ -81,7 +82,12 @@ func CreateServer(cfg *config.Config) (r *gin.Engine, err error) {
 	r.Use(middleware...)
 	r.UseRawPath = true
 	prefix := r.Group(cfg.URLPrefix)
-	REGISTRY := service.NewRegistry(db.NewMongoRepo())
+
+	REGISTRY := service.NewRegistry(db.NewMongoRepo(), perm)
+	err = REGISTRY.ValidateOperatorPermissions()
+	if err != nil {
+		return nil, err
+	}
 	setRoutes, err := routes.Set(*REGISTRY, prefix)
 	if err != nil {
 		return nil, err

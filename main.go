@@ -34,6 +34,7 @@ import (
 	"github.com/SENERGY-Platform/go-service-base/srv-info-hdl"
 	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
 	sb_util "github.com/SENERGY-Platform/go-service-base/util"
+	permV2Client "github.com/SENERGY-Platform/permissions-v2/pkg/client"
 )
 
 var version = "0.0.22"
@@ -62,7 +63,18 @@ func main() {
 
 	db.InitDB(&cfg.Mongo)
 	defer db.CloseDB()
-	httpHandler, err := api.CreateServer(cfg)
+
+	ctx, cf := context.WithCancel(context.Background())
+
+	var perm permV2Client.Client
+	if cfg.PermissionsV2Url == "mock" {
+		util.Logger.Debug("using mock permissions")
+		perm, err = permV2Client.NewTestClient(ctx)
+	} else {
+		perm = permV2Client.New(cfg.PermissionsV2Url)
+	}
+
+	httpHandler, err := api.CreateServer(cfg, perm)
 	if err != nil {
 		util.Logger.Error("error creating http engine", "error", err)
 		ec = 1
@@ -75,8 +87,6 @@ func main() {
 	httpServer := &http.Server{
 		Addr:    bindAddress,
 		Handler: httpHandler}
-
-	ctx, cf := context.WithCancel(context.Background())
 
 	go func() {
 		util.Wait(ctx, util.Logger, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
