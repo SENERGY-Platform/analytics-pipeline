@@ -137,10 +137,7 @@ func (r *MongoRepo) FindPipeline(id string, _ string) (pipeline lib.Pipeline, er
 }
 
 func (r *MongoRepo) DeletePipeline(id string, userId string, admin bool) (err error) {
-	req := bson.M{"id": id, "userid": userId}
-	if admin {
-		req = bson.M{"id": id}
-	}
+	req := bson.M{"id": id}
 	res := Mongo().FindOneAndDelete(CTX, req)
 	return res.Err()
 }
