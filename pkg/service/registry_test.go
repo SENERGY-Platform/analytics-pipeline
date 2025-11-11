@@ -17,16 +17,19 @@
 package service
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
 	"github.com/SENERGY-Platform/analytics-pipeline/lib"
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/db"
+	permV2Client "github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	"github.com/google/uuid"
 )
 
 func TestRegistry_SavePipeline(t *testing.T) {
-	registry := NewRegistry(db.NewMockRepo())
+	perm, err := permV2Client.NewTestClient(context.Background())
+	registry := NewRegistry(db.NewMockRepo(), perm)
 	id, err := registry.SavePipeline(lib.Pipeline{}, "1")
 	if err != nil {
 		t.Skip(err)
