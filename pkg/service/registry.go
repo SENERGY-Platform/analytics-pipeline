@@ -66,8 +66,12 @@ func (r *Registry) GetPipelinesAdmin(userId string, args map[string][]string) (p
 	return r.repository.All(userId, true, args)
 }
 
-func (r *Registry) GetPipelinesStatisticsAdmin(userId string, args map[string][]string) (statistics lib.PipelineStatistics, err error) {
-	return r.repository.Statistics(userId, true, args)
+func (r *Registry) GetPipelineUserCount(userId string, args map[string][]string) (statistics []lib.PipelineUserCount, err error) {
+	return r.repository.PipelineUserCount(userId, true, args)
+}
+
+func (r *Registry) GetOperatorUsage(userId string, args map[string][]string) (statistics []lib.OperatorUsage, err error) {
+	return r.repository.OperatorUsage(userId, true, args)
 }
 
 func (r *Registry) DeletePipelineAdmin(id string, userId string) (lib.Response, error) {

@@ -170,12 +170,25 @@ func getPipelinesAdmin(registry service.Registry) (string, string, gin.HandlerFu
 	}
 }
 
-func getPipelinesStatisticsAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
-	return http.MethodGet, "/admin/pipeline/statistics", func(c *gin.Context) {
+func getPipelineUserCountAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
+	return http.MethodGet, "/admin/pipeline/statistics/usercount", func(c *gin.Context) {
 		args := c.Request.URL.Query()
-		statistics, err := registry.GetPipelinesStatisticsAdmin(c.GetString(UserIdKey), args)
+		statistics, err := registry.GetPipelineUserCount(c.GetString(UserIdKey), args)
 		if err != nil {
-			util.Logger.Error("could not get pipelines statistics for admin", "error", err, "method", "GET", "path", "/admin/pipeline/statistics")
+			util.Logger.Error("could not get PipelineUserCount statistics for admin", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/usercount")
+			_ = c.Error(errors.New(MessageSomethingWrong))
+			return
+		}
+		c.JSON(http.StatusOK, statistics)
+	}
+}
+
+func getOperatorUsageAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
+	return http.MethodGet, "/admin/pipeline/statistics/operatorusage", func(c *gin.Context) {
+		args := c.Request.URL.Query()
+		statistics, err := registry.GetOperatorUsage(c.GetString(UserIdKey), args)
+		if err != nil {
+			util.Logger.Error("could not get OperatorUsage statistics for admin", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/operatorusage")
 			_ = c.Error(errors.New(MessageSomethingWrong))
 			return
 		}

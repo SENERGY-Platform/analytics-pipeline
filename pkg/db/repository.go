@@ -36,7 +36,8 @@ type PipelineRepository interface {
 	All(userId string, admin bool, args map[string][]string) (pipelines lib.PipelinesResponse, err error)
 	FindPipeline(id string, userId string) (pipeline lib.Pipeline, err error)
 	DeletePipeline(id string, userId string, admin bool) (err error)
-	Statistics(userId string, admin bool, args map[string][]string) (statistics lib.PipelineStatistics, err error)
+	PipelineUserCount(userId string, admin bool, args map[string][]string) (statistics []lib.PipelineUserCount, err error)
+	OperatorUsage(userId string, admin bool, args map[string][]string) (statistics []lib.OperatorUsage, err error)
 }
 
 type MongoRepo struct {
@@ -138,7 +139,7 @@ func (r *MongoRepo) DeletePipeline(id string, userId string, admin bool) (err er
 	return res.Err()
 }
 
-func (r *MongoRepo) Statistics(_ string, _ bool, _ map[string][]string) (statistics lib.PipelineStatistics, err error) {
+func (r *MongoRepo) PipelineUserCount(_ string, _ bool, _ map[string][]string) (statistics []lib.PipelineUserCount, err error) {
 	pipeline := mongo.Pipeline{
 		{
 			{"$group", bson.D{
@@ -164,11 +165,14 @@ func (r *MongoRepo) Statistics(_ string, _ bool, _ map[string][]string) (statist
 		}
 	}(aggregate, CTX)
 
-	if err = aggregate.All(CTX, &statistics.PipelineUserCount); err != nil {
+	if err = aggregate.All(CTX, &statistics); err != nil {
 		return
 	}
+	return
+}
 
-	pipeline = mongo.Pipeline{
+func (r *MongoRepo) OperatorUsage(_ string, _ bool, _ map[string][]string) (statistics []lib.OperatorUsage, err error) {
+	pipeline := mongo.Pipeline{
 		{{"$unwind", "$operators"}},
 
 		{{"$group", bson.D{
@@ -180,7 +184,7 @@ func (r *MongoRepo) Statistics(_ string, _ bool, _ map[string][]string) (statist
 		{{"$sort", bson.D{{"count", -1}}}},
 	}
 
-	aggregate, err = Mongo().Aggregate(CTX, pipeline)
+	aggregate, err := Mongo().Aggregate(CTX, pipeline)
 	if err != nil {
 		return
 	}
@@ -191,7 +195,7 @@ func (r *MongoRepo) Statistics(_ string, _ bool, _ map[string][]string) (statist
 		}
 	}(aggregate, CTX)
 
-	if err = aggregate.All(CTX, &statistics.OperatorUsage); err != nil {
+	if err = aggregate.All(CTX, &statistics); err != nil {
 		return
 	}
 	return
