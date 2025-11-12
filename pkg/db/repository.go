@@ -179,7 +179,7 @@ func (r *MongoRepo) OperatorUsage(_ string, _ bool, _ map[string][]string) (stat
 		{{"$unwind", "$operators"}},
 
 		{{"$group", bson.D{
-			{"_id", "$operators.id"},
+			{"_id", "$operators.operatorid"},
 			{"count", bson.D{{"$sum", 1}}},
 			{"pipelineIds", bson.D{{"$addToSet", "$id"}}},
 		}}},
