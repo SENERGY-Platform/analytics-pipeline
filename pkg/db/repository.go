@@ -91,33 +91,30 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string, ids
 		ids = []string{}
 	}
 	var cur *mongo.Cursor
-	req := bson.M{
-		"$or": []interface{}{
-			bson.M{"id": bson.M{"$in": ids}},
-			bson.M{"userid": userId},
-		}}
-	if val, ok := args["search"]; ok {
+	req := bson.M{}
+
+	if !admin {
 		req = bson.M{
-			"name": bson.M{
-				"$regex":   val[0],
-				"$options": "i",
-			},
 			"$or": []interface{}{
 				bson.M{"id": bson.M{"$in": ids}},
-				bson.M{"userId": userId},
+				bson.M{"userid": userId},
 			}}
 	}
-	if admin {
-		req = bson.M{}
-		if val, ok := args["search"]; ok {
-			req = bson.M{
-				"name": bson.M{
-					"$regex":   val[0],
-					"$options": "i",
-				},
-			}
+
+	if val, ok := args["search"]; ok {
+		req["name"] = bson.M{
+			"$regex":   val[0],
+			"$options": "i",
 		}
 	}
+
+	if val, ok := args["filter"]; ok {
+		filter := strings.Split(val[0], ":")
+		if filter[0] == "operator" {
+			req["operators.operatorid"] = filter[1]
+		}
+	}
+
 	cur, err = Mongo().Find(CTX, req, opt)
 	if err != nil {
 		return
