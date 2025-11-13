@@ -111,7 +111,7 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string, ids
 	if val, ok := args["filter"]; ok {
 		filter := strings.Split(val[0], ":")
 		if filter[0] == "operator" {
-			req["operators.operatorid"] = filter[1]
+			req["operators.operatorid"] = bson.M{"$in": strings.Split(filter[1], ",")}
 		}
 	}
 
