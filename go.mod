@@ -5,7 +5,6 @@ go 1.24.0
 toolchain go1.24.7
 
 require (
-	github.com/SENERGY-Platform/analytics-pipeline/lib v0.0.0-00010101000000-000000000000
 	github.com/SENERGY-Platform/gin-middleware v0.12.0
 	github.com/SENERGY-Platform/go-service-base/config-hdl v1.2.0
 	github.com/SENERGY-Platform/go-service-base/srv-info-hdl v0.2.0
@@ -78,5 +77,3 @@ require (
 	google.golang.org/protobuf v1.36.9 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
-
-replace github.com/SENERGY-Platform/analytics-pipeline/lib => ./lib

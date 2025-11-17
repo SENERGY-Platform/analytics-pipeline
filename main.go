@@ -37,7 +37,7 @@ import (
 	permV2Client "github.com/SENERGY-Platform/permissions-v2/pkg/client"
 )
 
-var version = "0.0.29"
+var version = "0.0.30"
 
 func main() {
 
