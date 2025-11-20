@@ -41,7 +41,7 @@ import (
 // It also sets up the routes for the API using the given registry.
 // The server is started at the port specified in the config.
 // @title Analytics-Pipeline API
-// @version 0.0.30
+// @version 0.0.31
 // @description For the administration of analytics pipelines.
 // @license.name Apache-2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
@@ -74,9 +74,7 @@ func CreateServer(cfg *config.Config, perm permV2Client.Client) (r *gin.Engine, 
 	)
 	middleware = append(middleware,
 		requestid.New(requestid.WithCustomHeaderStrKey(HeaderRequestID)),
-		gin_mw.ErrorHandler(func(err error) int {
-			return 0
-		}, ", "),
+		gin_mw.ErrorHandler(util.GetStatusCode, ", "),
 		gin_mw.StructRecoveryHandler(util.Logger, gin_mw.DefaultRecoveryFunc),
 	)
 	r.Use(middleware...)
@@ -121,7 +119,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		userId, err := getUserId(gc)
 		if err != nil {
 			util.Logger.Error("could not get user id", "error", err)
-			gc.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			gc.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		gc.Set(UserIdKey, userId)
@@ -134,12 +132,12 @@ func AdminMiddleware() gin.HandlerFunc {
 		admin, err := isAdmin(gc)
 		if err != nil {
 			util.Logger.Error("could not check admin role", "error", err)
-			gc.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			gc.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		if !admin {
 			util.Logger.Warn("unauthorized user tries to access admin api")
-			gc.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			gc.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		gc.Set(AdminKey, true)

@@ -26,10 +26,9 @@ import (
 	"github.com/SENERGY-Platform/analytics-pipeline/lib"
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/db"
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/util"
-	"github.com/google/uuid"
-
 	permV2Client "github.com/SENERGY-Platform/permissions-v2/pkg/client"
 	permV2Model "github.com/SENERGY-Platform/permissions-v2/pkg/model"
+	"github.com/google/uuid"
 )
 
 type Registry struct {
@@ -143,7 +142,7 @@ func (r *Registry) UpdatePipeline(pipeline lib.Pipeline, userId string, auth str
 		return
 	}
 	if !ok {
-		return id, errors.New(MessageMissingRights)
+		return id, lib.NewForbiddenError(errors.New(MessageMissingRights))
 	}
 
 	oldPipeline, err := r.repository.FindPipeline(pipeline.Id, userId)
@@ -192,7 +191,7 @@ func (r *Registry) GetPipeline(id string, userId string, auth string) (pipeline 
 		return
 	}
 	if !ok {
-		return pipeline, errors.New(MessageMissingRights)
+		return pipeline, lib.NewForbiddenError(errors.New(MessageMissingRights))
 	}
 	return r.repository.FindPipeline(id, userId)
 }
@@ -203,7 +202,7 @@ func (r *Registry) DeletePipeline(id string, userId string, auth string) (err er
 		return
 	}
 	if !ok {
-		return errors.New(MessageMissingRights)
+		return lib.NewForbiddenError(errors.New(MessageMissingRights))
 	}
 	err = r.repository.DeletePipeline(id, userId, false)
 	if err != nil {

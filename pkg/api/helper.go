@@ -14,10 +14,23 @@
  * limitations under the License.
  */
 
-package service
+package api
 
-const PermV2InstanceTopic = "analytics-pipelines"
+import (
+	"errors"
 
-const (
-	MessageMissingRights = "missing access rights"
+	"github.com/SENERGY-Platform/analytics-pipeline/lib"
+	"go.mongodb.org/mongo-driver/mongo"
 )
+
+func handleError(err error) error {
+	var ie *lib.ForbiddenError
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		err = lib.NewNotFoundError(errors.New(MessageNotFound))
+	} else if errors.As(err, &ie) {
+		err = lib.NewForbiddenError(errors.New(MessageForbidden))
+	} else {
+		err = lib.NewInternalError(errors.New(MessageSomethingWrong))
+	}
+	return err
+}

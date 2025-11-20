@@ -30,4 +30,7 @@ const (
 
 const (
 	MessageSomethingWrong = "something went wrong"
+	MessageNotFound       = "not found"
+	MessageForbidden      = "forbidden"
+	MessageBadInput       = "bad input"
 )
