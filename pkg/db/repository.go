@@ -37,6 +37,7 @@ type PipelineRepository interface {
 	DeletePipeline(id string, userId string, admin bool) (err error)
 	PipelineUserCount(userId string, admin bool, args map[string][]string) (statistics []lib.PipelineUserCount, err error)
 	OperatorUsage(userId string, admin bool, args map[string][]string) (statistics []lib.OperatorUsage, err error)
+	FlowUsage() (statistics []lib.FlowUsage, err error)
 }
 
 type MongoRepo struct {
@@ -64,22 +65,32 @@ func (r *MongoRepo) UpdatePipeline(pipeline lib.Pipeline, _ string) (err error) 
 }
 
 func (r *MongoRepo) All(userId string, admin bool, args map[string][]string, ids []string) (pipelines lib.PipelinesResponse, err error) {
+
 	opt := options.Find()
+
 	for arg, value := range args {
-		if arg == "limit" {
+
+		switch arg {
+
+		case "limit":
 			limit, _ := strconv.ParseInt(value[0], 10, 64)
 			opt.SetLimit(limit)
-		}
-		if arg == "offset" {
+
+		case "offset":
 			skip, _ := strconv.ParseInt(value[0], 10, 64)
 			opt.SetSkip(skip)
-		}
-		if arg == "order" {
-			ord := strings.Split(value[0], ":")
+
+		case "order":
+			ord := strings.SplitN(value[0], ":", 2)
+			if len(ord) != 2 {
+				break
+			}
+
 			order := 1
 			if ord[1] == "desc" {
 				order = -1
 			}
+
 			sortFields := []string{"name", "id", "createdat", "updatedat"}
 			if slices.Contains(sortFields, ord[0]) {
 				opt.SetSort(bson.M{ord[0]: int64(order)})
@@ -87,42 +98,77 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string, ids
 		}
 	}
 
-	if ids == nil {
-		ids = []string{}
-	}
-	var cur *mongo.Cursor
-	req := bson.M{}
+	andFilters := bson.A{}
 
 	if !admin {
-		req = bson.M{
-			"$or": []interface{}{
+		if ids == nil {
+			ids = []string{}
+		}
+
+		andFilters = append(andFilters, bson.M{
+			"$or": bson.A{
 				bson.M{"id": bson.M{"$in": ids}},
 				bson.M{"userid": userId},
-			}}
+			},
+		})
 	}
 
-	if val, ok := args["search"]; ok {
-		req["name"] = bson.M{
-			"$regex":   val[0],
-			"$options": "i",
+	if val, ok := args["search"]; ok && len(val) > 0 {
+		andFilters = append(andFilters, bson.M{
+			"name": bson.M{
+				"$regex":   val[0],
+				"$options": "i",
+			},
+		})
+	}
+
+	fieldMap := map[string]string{
+		"operator": "operators.operatorid",
+		"flow":     "flowid",
+	}
+
+	if vals, ok := args["filter"]; ok {
+		for _, raw := range vals {
+			for _, f := range strings.Split(raw, "|") {
+
+				parts := strings.SplitN(f, ":", 2)
+				if len(parts) != 2 {
+					continue
+				}
+
+				field, exists := fieldMap[parts[0]]
+				if !exists {
+					continue
+				}
+
+				values := strings.Split(parts[1], ",")
+				if len(values) == 0 {
+					continue
+				}
+
+				andFilters = append(andFilters, bson.M{
+					field: bson.M{"$in": values},
+				})
+			}
 		}
 	}
 
-	if val, ok := args["filter"]; ok {
-		filter := strings.Split(val[0], ":")
-		if filter[0] == "operator" {
-			req["operators.operatorid"] = bson.M{"$in": strings.Split(filter[1], ",")}
-		}
+	req := bson.M{}
+	if len(andFilters) > 0 {
+		req["$and"] = andFilters
 	}
 
+	var cur *mongo.Cursor
 	cur, err = Mongo().Find(CTX, req, opt)
 	if err != nil {
 		return
 	}
+
 	pipelines.Total, err = Mongo().CountDocuments(CTX, req)
 	if err != nil {
 		return
 	}
+
 	pipelines.Data = make([]lib.Pipeline, 0)
 	err = cur.All(context.TODO(), &pipelines.Data)
 	return
@@ -201,6 +247,34 @@ func (r *MongoRepo) OperatorUsage(_ string, _ bool, _ map[string][]string) (stat
 	return
 }
 
+func (r *MongoRepo) FlowUsage() (statistics []lib.FlowUsage, err error) {
+	pipeline := mongo.Pipeline{
+		{{"$group", bson.D{
+			{"_id", "$flowid"},
+			{"count", bson.D{{"$sum", 1}}},
+			{"pipelineIds", bson.D{{"$addToSet", "$id"}}},
+		}}},
+
+		{{"$sort", bson.D{{"count", -1}}}},
+	}
+
+	aggregate, err := Mongo().Aggregate(CTX, pipeline)
+	if err != nil {
+		return
+	}
+	defer func(aggregate *mongo.Cursor, ctx context.Context) {
+		err = aggregate.Close(ctx)
+		if err != nil {
+			return
+		}
+	}(aggregate, CTX)
+
+	if err = aggregate.All(CTX, &statistics); err != nil {
+		return
+	}
+	return
+}
+
 type MockRepo struct {
 }
 
@@ -228,9 +302,13 @@ func (r *MockRepo) DeletePipeline(_ string, _ string, _ bool) (err error) {
 	return
 }
 
-func (r *MockRepo) PipelineUserCount(userId string, admin bool, args map[string][]string) (statistics []lib.PipelineUserCount, err error) {
+func (r *MockRepo) PipelineUserCount(_ string, _ bool, _ map[string][]string) (statistics []lib.PipelineUserCount, err error) {
 	return
 }
-func (r *MockRepo) OperatorUsage(userId string, admin bool, args map[string][]string) (statistics []lib.OperatorUsage, err error) {
+func (r *MockRepo) OperatorUsage(_ string, _ bool, _ map[string][]string) (statistics []lib.OperatorUsage, err error) {
+	return
+}
+
+func (r *MockRepo) FlowUsage(_ string, _ bool, _ map[string][]string) (statistics []lib.OperatorUsage, err error) {
 	return
 }

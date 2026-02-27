@@ -209,6 +209,18 @@ func getOperatorUsageAdmin(registry service.Registry) (string, string, gin.Handl
 	}
 }
 
+func getFlowUsageAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
+	return http.MethodGet, "/admin/pipeline/statistics/flowusage", func(c *gin.Context) {
+		statistics, err := registry.GetFlowUsage()
+		if err != nil {
+			util.Logger.Error("could not get FlowUsage statistics for admin", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/flowusage")
+			_ = c.Error(handleError(err))
+			return
+		}
+		c.JSON(http.StatusOK, statistics)
+	}
+}
+
 func deletePipelineAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodDelete, "/admin/pipeline/:id", func(c *gin.Context) {
 		id := c.Param("id")

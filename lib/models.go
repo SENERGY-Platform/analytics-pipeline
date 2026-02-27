@@ -113,3 +113,9 @@ type OperatorUsage struct {
 	Count       int32    `json:"count,omitempty" bson:"count"`
 	PipelineIds []string `json:"pipelineIds,omitempty" bson:"pipelineIds"`
 }
+
+type FlowUsage struct {
+	FlowId      string   `json:"flowId,omitempty" bson:"_id"`
+	Count       int32    `json:"count,omitempty" bson:"count"`
+	PipelineIds []string `json:"pipelineIds,omitempty" bson:"pipelineIds"`
+}

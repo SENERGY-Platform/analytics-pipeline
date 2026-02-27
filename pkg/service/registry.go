@@ -176,6 +176,10 @@ func (r *Registry) GetOperatorUsage(userId string, args map[string][]string) (st
 	return r.repository.OperatorUsage(userId, true, args)
 }
 
+func (r *Registry) GetFlowUsage() (statistics []lib.FlowUsage, err error) {
+	return r.repository.FlowUsage()
+}
+
 func (r *Registry) DeletePipelineAdmin(id string, userId string) (resp lib.Response, err error) {
 	err = r.repository.DeletePipeline(id, userId, true)
 	if err != nil {

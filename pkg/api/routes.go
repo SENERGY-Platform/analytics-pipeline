@@ -39,4 +39,5 @@ var routesAdmin = gin_mw.Routes[service.Registry]{
 	deletePipelineAdmin,
 	getPipelineUserCountAdmin,
 	getOperatorUsageAdmin,
+	getFlowUsageAdmin,
 }
