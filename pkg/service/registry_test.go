@@ -24,7 +24,6 @@ import (
 	"github.com/SENERGY-Platform/analytics-pipeline/lib"
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/db"
 	permV2Client "github.com/SENERGY-Platform/permissions-v2/pkg/client"
-	"github.com/google/uuid"
 )
 
 func TestRegistry_SavePipeline(t *testing.T) {
@@ -34,8 +33,8 @@ func TestRegistry_SavePipeline(t *testing.T) {
 	if err != nil {
 		t.Skip(err)
 	}
-	if reflect.TypeOf(id) != reflect.TypeOf(uuid.New()) {
+	if reflect.TypeOf(id) != reflect.TypeOf("") {
 		t.Errorf("handler returned unexpected body: got %v want %v",
-			reflect.TypeOf(id), reflect.TypeOf(uuid.New()))
+			reflect.TypeOf(id), reflect.TypeOf(""))
 	}
 }
