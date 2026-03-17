@@ -89,9 +89,12 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Pipeline ID",
                         "schema": {
-                            "$ref": "#/definitions/lib.PipelineResponse"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
@@ -153,9 +156,12 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Pipeline ID",
                         "schema": {
-                            "$ref": "#/definitions/lib.PipelineResponse"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
@@ -462,14 +468,6 @@
                 },
                 "windowTime": {
                     "type": "integer"
-                }
-            }
-        },
-        "lib.PipelineResponse": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
                 }
             }
         },

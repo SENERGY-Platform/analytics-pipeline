@@ -34,7 +34,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param request body lib.Pipeline true "Pipeline request"
-// @Success 200 {object} lib.PipelineResponse
+// @Success 200 {object} map[string]string "Pipeline ID"
 // @Failure 400 {string} MessageBadInput
 // @Failure 401
 // @Failure 500 {string} MessageSomethingWrong
@@ -48,13 +48,13 @@ func postPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 			_ = c.Error(lib.NewInputError(errors.New(MessageBadInput)))
 			return
 		}
-		uuid, err := registry.SavePipeline(request, c.GetString(UserIdKey))
+		id, err := registry.SavePipeline(request, c.GetString(UserIdKey))
 		if err != nil {
 			util.Logger.Error("could not get save pipeline", "error", err, "method", "POST", "path", PipelinePath)
 			_ = c.Error(handleError(err))
 			return
 		}
-		c.JSON(http.StatusOK, lib.PipelineResponse{Id: uuid})
+		c.JSON(http.StatusOK, gin.H{"id": id})
 	}
 }
 
@@ -65,7 +65,7 @@ func postPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 // @Accept json
 // @Produce json
 // @Param request body lib.Pipeline true "Pipeline request"
-// @Success 200 {object} lib.PipelineResponse
+// @Success 200 {object} map[string]string "Pipeline ID"
 // @Failure 400 {string} MessageBadInput
 // @Failure 401
 // @Failure 403 {string} MessageForbidden
@@ -81,13 +81,13 @@ func putPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 			_ = c.Error(lib.NewInputError(errors.New(MessageBadInput)))
 			return
 		}
-		uuid, err := registry.UpdatePipeline(request, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
+		id, err := registry.UpdatePipeline(request, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
 		if err != nil {
 			util.Logger.Error("could not get save pipeline", "error", err, "method", "POST", "path", PipelinePath)
 			_ = c.Error(handleError(err))
 			return
 		}
-		c.JSON(http.StatusOK, lib.PipelineResponse{Id: uuid})
+		c.JSON(http.StatusOK, gin.H{"id": id})
 	}
 }
 
@@ -224,7 +224,7 @@ func getFlowUsageAdmin(registry service.Registry) (string, string, gin.HandlerFu
 func deletePipelineAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodDelete, "/admin/pipeline/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		_, err := registry.DeletePipelineAdmin(id, c.GetString(UserIdKey))
+		err := registry.DeletePipelineAdmin(id, c.GetString(UserIdKey))
 		if err != nil {
 			util.Logger.Error("could not delete pipeline for admin", "error", err, "method", "DELETE", "path", "/admin/pipeline/"+id)
 			_ = c.Error(handleError(err))

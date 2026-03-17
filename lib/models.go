@@ -22,14 +22,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type Response struct {
-	Message string `json:"message,omitempty"`
-}
-
-type PipelineResponse struct {
-	Id uuid.UUID `json:"id,omitempty"`
-}
-
 type PipelinesResponse struct {
 	Data  []Pipeline `json:"data"`
 	Total int64      `json:"total"`

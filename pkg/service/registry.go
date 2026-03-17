@@ -115,10 +115,11 @@ func SetDefaultPermissions(instance lib.Pipeline, permissions permV2Client.Resou
 	}
 }
 
-func (r *Registry) SavePipeline(pipeline lib.Pipeline, userId string) (id uuid.UUID, err error) {
+func (r *Registry) SavePipeline(pipeline lib.Pipeline, userId string) (id string, err error) {
 	// Create new uuid to use as pipeline id
-	id = uuid.New()
-	pipeline.Id = id.String()
+	uid := uuid.New()
+	id = uid.String()
+	pipeline.Id = id
 	pipeline.UserId = userId
 	pipeline.CreatedAt = time.Now()
 	pipeline.UpdatedAt = time.Now()
@@ -136,7 +137,7 @@ func (r *Registry) SavePipeline(pipeline lib.Pipeline, userId string) (id uuid.U
 	return
 }
 
-func (r *Registry) UpdatePipeline(pipeline lib.Pipeline, userId string, auth string) (id uuid.UUID, err error) {
+func (r *Registry) UpdatePipeline(pipeline lib.Pipeline, userId string, auth string) (id string, err error) {
 	ok, err, _ := r.perm.CheckPermission(auth, PermV2InstanceTopic, pipeline.Id, permV2Client.Write)
 	if err != nil {
 		return
@@ -147,14 +148,14 @@ func (r *Registry) UpdatePipeline(pipeline lib.Pipeline, userId string, auth str
 
 	oldPipeline, err := r.repository.FindPipeline(pipeline.Id, userId)
 	if err != nil {
-		return [16]byte{}, err
+		return id, err
 	}
 	pipeline.CreatedAt = oldPipeline.CreatedAt
 	pipeline.UpdatedAt = time.Now()
 	pipeline.UserId = oldPipeline.UserId
 	err = r.repository.UpdatePipeline(pipeline, userId)
 	if err != nil {
-		return [16]byte{}, err
+		return id, err
 	}
 	return
 }
@@ -180,13 +181,13 @@ func (r *Registry) GetFlowUsage() (statistics []lib.FlowUsage, err error) {
 	return r.repository.FlowUsage()
 }
 
-func (r *Registry) DeletePipelineAdmin(id string, userId string) (resp lib.Response, err error) {
+func (r *Registry) DeletePipelineAdmin(id string, userId string) (err error) {
 	err = r.repository.DeletePipeline(id, userId, true)
 	if err != nil {
 		return
 	}
 	err, _ = r.perm.RemoveResource(permV2Client.InternalAdminToken, PermV2InstanceTopic, id)
-	return lib.Response{Message: "OK"}, nil
+	return err
 }
 
 func (r *Registry) GetPipeline(id string, userId string, auth string) (pipeline lib.Pipeline, err error) {
