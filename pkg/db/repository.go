@@ -318,6 +318,6 @@ func (r *MockRepo) OperatorUsage(_ string, _ bool, _ map[string][]string) (stati
 	return
 }
 
-func (r *MockRepo) FlowUsage() (statistics []lib.FlowUsage, err error) {
+func (r *MockRepo) FlowUsage(id string) (statistics []lib.FlowUsage, err error) {
 	return
 }
