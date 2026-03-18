@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
+	"time"
 )
 
 type Client struct {
@@ -32,21 +34,40 @@ func NewClient(baseUrl string) *Client {
 }
 
 func do[T any](req *http.Request, token string, userId string) (result T, err error, code int) {
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", withBearer(token))
 	req.Header.Set("X-UserId", userId)
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return result, err, http.StatusInternalServerError
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode > 299 {
-		temp, _ := io.ReadAll(resp.Body) //read error response end ensure that resp.Body is read to EOF
-		return result, fmt.Errorf("unexpected statuscode %v: %v", resp.StatusCode, string(temp)), resp.StatusCode
+	code = resp.StatusCode
+
+	if code >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return result, fmt.Errorf(
+			"unexpected status code %d: %s",
+			code,
+			strings.TrimSpace(string(body)),
+		), code
 	}
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		_, _ = io.ReadAll(resp.Body) //ensure resp.Body is read to EOF
-		return result, err, http.StatusInternalServerError
+
+	if resp.ContentLength == 0 {
+		return result, nil, code
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return result, err, code
 	}
 	return
+}
+
+func withBearer(token string) string {
+	if strings.HasPrefix(strings.ToLower(token), "bearer ") {
+		return token
+	}
+	return "Bearer " + token
 }
