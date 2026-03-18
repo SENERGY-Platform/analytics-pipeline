@@ -178,7 +178,18 @@ func (r *Registry) GetOperatorUsage(userId string, args map[string][]string) (st
 }
 
 func (r *Registry) GetFlowUsage() (statistics []lib.FlowUsage, err error) {
-	return r.repository.FlowUsage()
+	return r.repository.FlowUsage("")
+}
+
+func (r *Registry) GetFlowUsageById(id string) (statistics *lib.FlowUsage, err error) {
+	resp, err := r.repository.FlowUsage(id)
+	if err != nil {
+		return
+	}
+	if len(resp) == 0 {
+		return
+	}
+	return &resp[0], nil
 }
 
 func (r *Registry) DeletePipelineAdmin(id string, userId string) (err error) {

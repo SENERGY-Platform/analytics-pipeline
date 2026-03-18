@@ -37,7 +37,7 @@ type PipelineRepository interface {
 	DeletePipeline(id string, userId string, admin bool) (err error)
 	PipelineUserCount(userId string, admin bool, args map[string][]string) (statistics []lib.PipelineUserCount, err error)
 	OperatorUsage(userId string, admin bool, args map[string][]string) (statistics []lib.OperatorUsage, err error)
-	FlowUsage() (statistics []lib.FlowUsage, err error)
+	FlowUsage(id string) (statistics []lib.FlowUsage, err error)
 }
 
 type MongoRepo struct {
@@ -247,16 +247,25 @@ func (r *MongoRepo) OperatorUsage(_ string, _ bool, _ map[string][]string) (stat
 	return
 }
 
-func (r *MongoRepo) FlowUsage() (statistics []lib.FlowUsage, err error) {
-	pipeline := mongo.Pipeline{
-		{{"$group", bson.D{
+func (r *MongoRepo) FlowUsage(id string) (statistics []lib.FlowUsage, err error) {
+	pipeline := mongo.Pipeline{}
+
+	if id != "" {
+		pipeline = append(pipeline, bson.D{
+			{"$match", bson.D{
+				{"flowid", id},
+			}},
+		})
+	}
+
+	pipeline = append(pipeline,
+		bson.D{{"$group", bson.D{
 			{"_id", "$flowid"},
 			{"count", bson.D{{"$sum", 1}}},
 			{"pipelineIds", bson.D{{"$addToSet", "$id"}}},
 		}}},
-
-		{{"$sort", bson.D{{"count", -1}}}},
-	}
+		bson.D{{"$sort", bson.D{{"count", -1}}}},
+	)
 
 	aggregate, err := Mongo().Aggregate(CTX, pipeline)
 	if err != nil {
