@@ -87,7 +87,7 @@ func (c *Client) DeletePipeline(token string, userId string, id string) (err err
 	return err, code
 }
 
-func (c *Client) GetFlowUsageByIdAdmin(token string, userId string, id string) (usage *lib.FlowUsage, err error, code int) {
-	req, err := http.NewRequest(http.MethodGet, c.baseUrl+"/admin/pipeline/statistics/flowusage/"+id, nil)
+func (c *Client) GetFlowUsageById(token string, userId string, id string) (usage *lib.FlowUsage, err error, code int) {
+	req, err := http.NewRequest(http.MethodGet, c.baseUrl+"/pipeline/statistics/flowusage/"+id, nil)
 	return do[*lib.FlowUsage](req, token, userId)
 }

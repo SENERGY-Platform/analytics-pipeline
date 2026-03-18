@@ -221,12 +221,24 @@ func getFlowUsageAdmin(registry service.Registry) (string, string, gin.HandlerFu
 	}
 }
 
-func getFlowUsageByIdAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
-	return http.MethodGet, "/admin/pipeline/statistics/flowusage/:id", func(c *gin.Context) {
+// getFlowUsageById returns a handler function for the "/pipeline/statistics/flowusage/:id" endpoint that checks if a flow is used by pipelines
+// @Summary Retrieve a list of pipelines that are using a flow
+// @Description Retrieves a list of pipelines given a flow id
+// @Tags pipelines
+// @Accept json
+// @Produce json
+// @Success 200 {object} lib.FlowUsage
+// @Success 204
+// @Failure 401
+// @Failure 500 {string} MessageSomethingWrong
+// @Router /pipeline/statistics/flowusage/:id [get]
+// @Security Bearer
+func getFlowUsageById(registry service.Registry) (string, string, gin.HandlerFunc) {
+	return http.MethodGet, "/pipeline/statistics/flowusage/:id", func(c *gin.Context) {
 		id := c.Param("id")
 		statistics, err := registry.GetFlowUsageById(id)
 		if err != nil {
-			util.Logger.Error("could not get getFlowUsageById statistics for admin", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/flowusage/"+id)
+			util.Logger.Error("could not get getFlowUsageById statistics", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/flowusage/"+id)
 			_ = c.Error(handleError(err))
 			return
 		}
