@@ -29,7 +29,7 @@ import (
 func TestRegistry_SavePipeline(t *testing.T) {
 	perm, err := permV2Client.NewTestClient(context.Background())
 	registry := NewRegistry(db.NewMockRepo(), perm)
-	id, err := registry.SavePipeline(lib.Pipeline{}, "1")
+	id, err := registry.SavePipeline(context.Background(), lib.Pipeline{}, "1")
 	if err != nil {
 		t.Skip(err)
 	}

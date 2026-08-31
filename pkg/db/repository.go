@@ -29,15 +29,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// Every method takes a context. It carries the deadline of the request that caused
+// the query and the trace it belongs to, which is what makes otelmongo's spans
+// children of that request rather than roots of their own.
 type PipelineRepository interface {
-	InsertPipeline(pipeline lib.Pipeline) (err error)
-	UpdatePipeline(pipeline lib.Pipeline, userId string) (err error)
-	All(userId string, admin bool, args map[string][]string, ids []string) (pipelines lib.PipelinesResponse, err error)
-	FindPipeline(id string, userId string) (pipeline lib.Pipeline, err error)
-	DeletePipeline(id string, userId string, admin bool) (err error)
-	PipelineUserCount(userId string, admin bool, args map[string][]string) (statistics []lib.PipelineUserCount, err error)
-	OperatorUsage(userId string, admin bool, args map[string][]string) (statistics []lib.OperatorUsage, err error)
-	FlowUsage(id string) (statistics []lib.FlowUsage, err error)
+	InsertPipeline(ctx context.Context, pipeline lib.Pipeline) (err error)
+	UpdatePipeline(ctx context.Context, pipeline lib.Pipeline, userId string) (err error)
+	All(ctx context.Context, userId string, admin bool, args map[string][]string, ids []string) (pipelines lib.PipelinesResponse, err error)
+	FindPipeline(ctx context.Context, id string, userId string) (pipeline lib.Pipeline, err error)
+	DeletePipeline(ctx context.Context, id string, userId string, admin bool) (err error)
+	PipelineUserCount(ctx context.Context, userId string, admin bool, args map[string][]string) (statistics []lib.PipelineUserCount, err error)
+	OperatorUsage(ctx context.Context, userId string, admin bool, args map[string][]string) (statistics []lib.OperatorUsage, err error)
+	FlowUsage(ctx context.Context, id string) (statistics []lib.FlowUsage, err error)
 }
 
 type MongoRepo struct {
@@ -47,16 +50,16 @@ func NewMongoRepo() *MongoRepo {
 	return &MongoRepo{}
 }
 
-func (r *MongoRepo) InsertPipeline(pipeline lib.Pipeline) (err error) {
-	_, err = Mongo().InsertOne(CTX, pipeline)
+func (r *MongoRepo) InsertPipeline(ctx context.Context, pipeline lib.Pipeline) (err error) {
+	_, err = Mongo().InsertOne(ctx, pipeline)
 	if err != nil {
 		return
 	}
 	return
 }
 
-func (r *MongoRepo) UpdatePipeline(pipeline lib.Pipeline, _ string) (err error) {
-	_, err = Mongo().ReplaceOne(CTX, bson.M{"id": pipeline.Id}, pipeline)
+func (r *MongoRepo) UpdatePipeline(ctx context.Context, pipeline lib.Pipeline, _ string) (err error) {
+	_, err = Mongo().ReplaceOne(ctx, bson.M{"id": pipeline.Id}, pipeline)
 
 	if err != nil {
 		return err
@@ -64,7 +67,7 @@ func (r *MongoRepo) UpdatePipeline(pipeline lib.Pipeline, _ string) (err error) 
 	return nil
 }
 
-func (r *MongoRepo) All(userId string, admin bool, args map[string][]string, ids []string) (pipelines lib.PipelinesResponse, err error) {
+func (r *MongoRepo) All(ctx context.Context, userId string, admin bool, args map[string][]string, ids []string) (pipelines lib.PipelinesResponse, err error) {
 
 	opt := options.Find()
 
@@ -159,33 +162,33 @@ func (r *MongoRepo) All(userId string, admin bool, args map[string][]string, ids
 	}
 
 	var cur *mongo.Cursor
-	cur, err = Mongo().Find(CTX, req, opt)
+	cur, err = Mongo().Find(ctx, req, opt)
 	if err != nil {
 		return
 	}
 
-	pipelines.Total, err = Mongo().CountDocuments(CTX, req)
+	pipelines.Total, err = Mongo().CountDocuments(ctx, req)
 	if err != nil {
 		return
 	}
 
 	pipelines.Data = make([]lib.Pipeline, 0)
-	err = cur.All(context.TODO(), &pipelines.Data)
+	err = cur.All(ctx, &pipelines.Data)
 	return
 }
 
-func (r *MongoRepo) FindPipeline(id string, _ string) (pipeline lib.Pipeline, err error) {
-	err = Mongo().FindOne(CTX, bson.M{"id": id}).Decode(&pipeline)
+func (r *MongoRepo) FindPipeline(ctx context.Context, id string, _ string) (pipeline lib.Pipeline, err error) {
+	err = Mongo().FindOne(ctx, bson.M{"id": id}).Decode(&pipeline)
 	return
 }
 
-func (r *MongoRepo) DeletePipeline(id string, userId string, admin bool) (err error) {
+func (r *MongoRepo) DeletePipeline(ctx context.Context, id string, userId string, admin bool) (err error) {
 	req := bson.M{"id": id}
-	res := Mongo().FindOneAndDelete(CTX, req)
+	res := Mongo().FindOneAndDelete(ctx, req)
 	return res.Err()
 }
 
-func (r *MongoRepo) PipelineUserCount(_ string, _ bool, _ map[string][]string) (statistics []lib.PipelineUserCount, err error) {
+func (r *MongoRepo) PipelineUserCount(ctx context.Context, _ string, _ bool, _ map[string][]string) (statistics []lib.PipelineUserCount, err error) {
 	pipeline := mongo.Pipeline{
 		{
 			{"$group", bson.D{
@@ -200,7 +203,7 @@ func (r *MongoRepo) PipelineUserCount(_ string, _ bool, _ map[string][]string) (
 		},
 	}
 
-	aggregate, err := Mongo().Aggregate(CTX, pipeline)
+	aggregate, err := Mongo().Aggregate(ctx, pipeline)
 	if err != nil {
 		return
 	}
@@ -209,15 +212,15 @@ func (r *MongoRepo) PipelineUserCount(_ string, _ bool, _ map[string][]string) (
 		if err != nil {
 			return
 		}
-	}(aggregate, CTX)
+	}(aggregate, ctx)
 
-	if err = aggregate.All(CTX, &statistics); err != nil {
+	if err = aggregate.All(ctx, &statistics); err != nil {
 		return
 	}
 	return
 }
 
-func (r *MongoRepo) OperatorUsage(_ string, _ bool, _ map[string][]string) (statistics []lib.OperatorUsage, err error) {
+func (r *MongoRepo) OperatorUsage(ctx context.Context, _ string, _ bool, _ map[string][]string) (statistics []lib.OperatorUsage, err error) {
 	pipeline := mongo.Pipeline{
 		{{"$unwind", "$operators"}},
 
@@ -230,7 +233,7 @@ func (r *MongoRepo) OperatorUsage(_ string, _ bool, _ map[string][]string) (stat
 		{{"$sort", bson.D{{"count", -1}}}},
 	}
 
-	aggregate, err := Mongo().Aggregate(CTX, pipeline)
+	aggregate, err := Mongo().Aggregate(ctx, pipeline)
 	if err != nil {
 		return
 	}
@@ -239,15 +242,15 @@ func (r *MongoRepo) OperatorUsage(_ string, _ bool, _ map[string][]string) (stat
 		if err != nil {
 			return
 		}
-	}(aggregate, CTX)
+	}(aggregate, ctx)
 
-	if err = aggregate.All(CTX, &statistics); err != nil {
+	if err = aggregate.All(ctx, &statistics); err != nil {
 		return
 	}
 	return
 }
 
-func (r *MongoRepo) FlowUsage(id string) (statistics []lib.FlowUsage, err error) {
+func (r *MongoRepo) FlowUsage(ctx context.Context, id string) (statistics []lib.FlowUsage, err error) {
 	pipeline := mongo.Pipeline{}
 
 	if id != "" {
@@ -267,7 +270,7 @@ func (r *MongoRepo) FlowUsage(id string) (statistics []lib.FlowUsage, err error)
 		bson.D{{"$sort", bson.D{{"count", -1}}}},
 	)
 
-	aggregate, err := Mongo().Aggregate(CTX, pipeline)
+	aggregate, err := Mongo().Aggregate(ctx, pipeline)
 	if err != nil {
 		return
 	}
@@ -276,9 +279,9 @@ func (r *MongoRepo) FlowUsage(id string) (statistics []lib.FlowUsage, err error)
 		if err != nil {
 			return
 		}
-	}(aggregate, CTX)
+	}(aggregate, ctx)
 
-	if err = aggregate.All(CTX, &statistics); err != nil {
+	if err = aggregate.All(ctx, &statistics); err != nil {
 		return
 	}
 	return
@@ -291,33 +294,33 @@ func NewMockRepo() *MockRepo {
 	return &MockRepo{}
 }
 
-func (r *MockRepo) InsertPipeline(_ lib.Pipeline) (err error) {
+func (r *MockRepo) InsertPipeline(_ context.Context, _ lib.Pipeline) (err error) {
 	return
 }
 
-func (r *MockRepo) UpdatePipeline(_ lib.Pipeline, _ string) (err error) {
+func (r *MockRepo) UpdatePipeline(_ context.Context, _ lib.Pipeline, _ string) (err error) {
 	return
 }
 
-func (r *MockRepo) All(_ string, _ bool, _ map[string][]string, _ []string) (pipelines lib.PipelinesResponse, err error) {
+func (r *MockRepo) All(_ context.Context, _ string, _ bool, _ map[string][]string, _ []string) (pipelines lib.PipelinesResponse, err error) {
 	return
 }
 
-func (r *MockRepo) FindPipeline(_ string, _ string) (pipeline lib.Pipeline, err error) {
+func (r *MockRepo) FindPipeline(_ context.Context, _ string, _ string) (pipeline lib.Pipeline, err error) {
 	return
 }
 
-func (r *MockRepo) DeletePipeline(_ string, _ string, _ bool) (err error) {
+func (r *MockRepo) DeletePipeline(_ context.Context, _ string, _ string, _ bool) (err error) {
 	return
 }
 
-func (r *MockRepo) PipelineUserCount(_ string, _ bool, _ map[string][]string) (statistics []lib.PipelineUserCount, err error) {
+func (r *MockRepo) PipelineUserCount(_ context.Context, _ string, _ bool, _ map[string][]string) (statistics []lib.PipelineUserCount, err error) {
 	return
 }
-func (r *MockRepo) OperatorUsage(_ string, _ bool, _ map[string][]string) (statistics []lib.OperatorUsage, err error) {
+func (r *MockRepo) OperatorUsage(_ context.Context, _ string, _ bool, _ map[string][]string) (statistics []lib.OperatorUsage, err error) {
 	return
 }
 
-func (r *MockRepo) FlowUsage(id string) (statistics []lib.FlowUsage, err error) {
+func (r *MockRepo) FlowUsage(_ context.Context, id string) (statistics []lib.FlowUsage, err error) {
 	return
 }

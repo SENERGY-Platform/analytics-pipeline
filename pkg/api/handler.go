@@ -44,13 +44,13 @@ func postPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodPost, PipelinePath, func(c *gin.Context) {
 		var request lib.Pipeline
 		if err := c.ShouldBindJSON(&request); err != nil {
-			util.Logger.Error("error parsing request", "error", err, "method", "POST", "path", PipelinePath)
+			util.Logger.ErrorContext(c.Request.Context(), "error parsing request", "error", err, "method", "POST", "path", PipelinePath)
 			_ = c.Error(lib.NewInputError(errors.New(MessageBadInput)))
 			return
 		}
-		id, err := registry.SavePipeline(request, c.GetString(UserIdKey))
+		id, err := registry.SavePipeline(c.Request.Context(), request, c.GetString(UserIdKey))
 		if err != nil {
-			util.Logger.Error("could not get save pipeline", "error", err, "method", "POST", "path", PipelinePath)
+			util.Logger.ErrorContext(c.Request.Context(), "could not get save pipeline", "error", err, "method", "POST", "path", PipelinePath)
 			_ = c.Error(handleError(err))
 			return
 		}
@@ -77,13 +77,13 @@ func putPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodPut, PipelinePath, func(c *gin.Context) {
 		var request lib.Pipeline
 		if err := c.ShouldBindJSON(&request); err != nil {
-			util.Logger.Error("error parsing request", "error", err, "method", "POST", "path", PipelinePath)
+			util.Logger.ErrorContext(c.Request.Context(), "error parsing request", "error", err, "method", "POST", "path", PipelinePath)
 			_ = c.Error(lib.NewInputError(errors.New(MessageBadInput)))
 			return
 		}
-		id, err := registry.UpdatePipeline(request, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
+		id, err := registry.UpdatePipeline(c.Request.Context(), request, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
 		if err != nil {
-			util.Logger.Error("could not get save pipeline", "error", err, "method", "POST", "path", PipelinePath)
+			util.Logger.ErrorContext(c.Request.Context(), "could not get save pipeline", "error", err, "method", "POST", "path", PipelinePath)
 			_ = c.Error(handleError(err))
 			return
 		}
@@ -108,9 +108,9 @@ func putPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 func getPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, "/pipeline/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		pipe, err := registry.GetPipeline(id, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
+		pipe, err := registry.GetPipeline(c.Request.Context(), id, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
 		if err != nil {
-			util.Logger.Error("could not get pipeline", "error", err, "method", "GET", "path", "/pipeline/"+id)
+			util.Logger.ErrorContext(c.Request.Context(), "could not get pipeline", "error", err, "method", "GET", "path", "/pipeline/"+id)
 			_ = c.Error(handleError(err))
 			return
 		}
@@ -135,9 +135,9 @@ func getPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 func deletePipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodDelete, "/pipeline/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		err := registry.DeletePipeline(id, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
+		err := registry.DeletePipeline(c.Request.Context(), id, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
 		if err != nil {
-			util.Logger.Error("could not delete pipeline", "error", err, "method", "DELETE", "path", "/pipeline/"+id, "userId", c.GetString(UserIdKey))
+			util.Logger.ErrorContext(c.Request.Context(), "could not delete pipeline", "error", err, "method", "DELETE", "path", "/pipeline/"+id, "userId", c.GetString(UserIdKey))
 			_ = c.Error(handleError(err))
 			return
 		}
@@ -160,9 +160,9 @@ func deletePipeline(registry service.Registry) (string, string, gin.HandlerFunc)
 func getPipelines(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, PipelinePath, func(c *gin.Context) {
 		args := c.Request.URL.Query()
-		pipes, err := registry.GetPipelines(c.GetString(UserIdKey), args, c.GetHeader(HeaderAuthorization))
+		pipes, err := registry.GetPipelines(c.Request.Context(), c.GetString(UserIdKey), args, c.GetHeader(HeaderAuthorization))
 		if err != nil {
-			util.Logger.Error("could not get pipelines", "error", err, "method", "GET", "path", PipelinePath)
+			util.Logger.ErrorContext(c.Request.Context(), "could not get pipelines", "error", err, "method", "GET", "path", PipelinePath)
 			_ = c.Error(handleError(err))
 			return
 		}
@@ -173,9 +173,9 @@ func getPipelines(registry service.Registry) (string, string, gin.HandlerFunc) {
 func getPipelinesAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, "/admin/pipeline", func(c *gin.Context) {
 		args := c.Request.URL.Query()
-		pipes, err := registry.GetPipelinesAdmin(c.GetString(UserIdKey), args)
+		pipes, err := registry.GetPipelinesAdmin(c.Request.Context(), c.GetString(UserIdKey), args)
 		if err != nil {
-			util.Logger.Error("could not get pipelines for admin", "error", err, "method", "GET", "path", "/admin/pipeline/")
+			util.Logger.ErrorContext(c.Request.Context(), "could not get pipelines for admin", "error", err, "method", "GET", "path", "/admin/pipeline/")
 			_ = c.Error(handleError(err))
 			return
 		}
@@ -186,9 +186,9 @@ func getPipelinesAdmin(registry service.Registry) (string, string, gin.HandlerFu
 func getPipelineUserCountAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, "/admin/pipeline/statistics/usercount", func(c *gin.Context) {
 		args := c.Request.URL.Query()
-		statistics, err := registry.GetPipelineUserCount(c.GetString(UserIdKey), args)
+		statistics, err := registry.GetPipelineUserCount(c.Request.Context(), c.GetString(UserIdKey), args)
 		if err != nil {
-			util.Logger.Error("could not get PipelineUserCount statistics for admin", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/usercount")
+			util.Logger.ErrorContext(c.Request.Context(), "could not get PipelineUserCount statistics for admin", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/usercount")
 			_ = c.Error(handleError(err))
 			return
 		}
@@ -199,9 +199,9 @@ func getPipelineUserCountAdmin(registry service.Registry) (string, string, gin.H
 func getOperatorUsageAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, "/admin/pipeline/statistics/operatorusage", func(c *gin.Context) {
 		args := c.Request.URL.Query()
-		statistics, err := registry.GetOperatorUsage(c.GetString(UserIdKey), args)
+		statistics, err := registry.GetOperatorUsage(c.Request.Context(), c.GetString(UserIdKey), args)
 		if err != nil {
-			util.Logger.Error("could not get OperatorUsage statistics for admin", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/operatorusage")
+			util.Logger.ErrorContext(c.Request.Context(), "could not get OperatorUsage statistics for admin", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/operatorusage")
 			_ = c.Error(handleError(err))
 			return
 		}
@@ -211,9 +211,9 @@ func getOperatorUsageAdmin(registry service.Registry) (string, string, gin.Handl
 
 func getFlowUsageAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, "/admin/pipeline/statistics/flowusage", func(c *gin.Context) {
-		statistics, err := registry.GetFlowUsage()
+		statistics, err := registry.GetFlowUsage(c.Request.Context())
 		if err != nil {
-			util.Logger.Error("could not get FlowUsage statistics for admin", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/flowusage")
+			util.Logger.ErrorContext(c.Request.Context(), "could not get FlowUsage statistics for admin", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/flowusage")
 			_ = c.Error(handleError(err))
 			return
 		}
@@ -236,9 +236,9 @@ func getFlowUsageAdmin(registry service.Registry) (string, string, gin.HandlerFu
 func getFlowUsageById(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodGet, "/pipeline/statistics/flowusage/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		statistics, err := registry.GetFlowUsageById(id)
+		statistics, err := registry.GetFlowUsageById(c.Request.Context(), id)
 		if err != nil {
-			util.Logger.Error("could not get getFlowUsageById statistics", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/flowusage/"+id)
+			util.Logger.ErrorContext(c.Request.Context(), "could not get getFlowUsageById statistics", "error", err, "method", "GET", "path", "/admin/pipeline/statistics/flowusage/"+id)
 			_ = c.Error(handleError(err))
 			return
 		}
@@ -253,9 +253,9 @@ func getFlowUsageById(registry service.Registry) (string, string, gin.HandlerFun
 func deletePipelineAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodDelete, "/admin/pipeline/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		err := registry.DeletePipelineAdmin(id, c.GetString(UserIdKey))
+		err := registry.DeletePipelineAdmin(c.Request.Context(), id, c.GetString(UserIdKey))
 		if err != nil {
-			util.Logger.Error("could not delete pipeline for admin", "error", err, "method", "DELETE", "path", "/admin/pipeline/"+id)
+			util.Logger.ErrorContext(c.Request.Context(), "could not delete pipeline for admin", "error", err, "method", "DELETE", "path", "/admin/pipeline/"+id)
 			_ = c.Error(handleError(err))
 			return
 		}

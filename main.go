@@ -46,7 +46,7 @@ func main() {
 		os.Exit(ec)
 	}()
 
-	srvInfoHdl := srv_info_hdl.New("analytics-pipeline", version)
+	srvInfoHdl := srv_info_hdl.New(api.ServiceName, version)
 
 	config.ParseFlags()
 
@@ -58,25 +58,31 @@ func main() {
 	}
 	util.InitStructLogger(cfg.Logger.Level)
 
-	util.Logger.Info(srvInfoHdl.Name(), "version", srvInfoHdl.Version())
-	util.Logger.Info("config: " + sb_util.ToJsonStr(cfg))
-
-	db.InitDB(&cfg.Mongo)
-	defer db.CloseDB()
-
+	// The process context. Created before the database because InitDB initializes
+	// OpenTelemetry, which is tied to the process lifetime.
 	ctx, cf := context.WithCancel(context.Background())
+
+	util.Logger.InfoContext(ctx, srvInfoHdl.Name(), "version", srvInfoHdl.Version())
+	util.Logger.InfoContext(ctx, "config: "+sb_util.ToJsonStr(cfg))
+
+	if err = db.InitDB(ctx, &cfg.Mongo, api.ServiceName, cfg.OtelEndpoint); err != nil {
+		util.Logger.ErrorContext(ctx, "error initializing the database", "error", err)
+		ec = 1
+		return
+	}
+	defer db.CloseDB()
 
 	var perm permV2Client.Client
 	if cfg.PermissionsV2Url == "mock" {
-		util.Logger.Debug("using mock permissions")
+		util.Logger.DebugContext(ctx, "using mock permissions")
 		perm, err = permV2Client.NewTestClient(ctx)
 	} else {
 		perm = permV2Client.New(cfg.PermissionsV2Url)
 	}
 
-	httpHandler, err := api.CreateServer(cfg, perm)
+	httpHandler, err := api.CreateServer(ctx, cfg, perm)
 	if err != nil {
-		util.Logger.Error("error creating http engine", "error", err)
+		util.Logger.ErrorContext(ctx, "error creating http engine", "error", err)
 		ec = 1
 		return
 	}
@@ -99,9 +105,9 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		util.Logger.Info("starting http server")
+		util.Logger.InfoContext(ctx, "starting http server")
 		if err = httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			util.Logger.Error("starting server failed", attributes.ErrorKey, err)
+			util.Logger.ErrorContext(ctx, "starting server failed", attributes.ErrorKey, err)
 			ec = 1
 		}
 		cf()
@@ -111,14 +117,14 @@ func main() {
 	go func() {
 		defer wg.Done()
 		<-ctx.Done()
-		util.Logger.Info("stopping http server")
+		util.Logger.InfoContext(ctx, "stopping http server")
 		ctxWt, cf2 := context.WithTimeout(context.Background(), time.Second*5)
 		defer cf2()
 		if err := httpServer.Shutdown(ctxWt); err != nil {
-			util.Logger.Error("stopping server failed", attributes.ErrorKey, err)
+			util.Logger.ErrorContext(ctx, "stopping server failed", attributes.ErrorKey, err)
 			ec = 1
 		} else {
-			util.Logger.Info("http server stopped")
+			util.Logger.InfoContext(ctx, "http server stopped")
 		}
 	}()
 

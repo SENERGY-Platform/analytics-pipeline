@@ -33,6 +33,10 @@ type Config struct {
 	URLPrefix        string       `json:"url_prefix" env_var:"URL_PREFIX"`
 	Mongo            MongoConfig  `json:"mongo" env_var:"MONGO_CONFIG"`
 	PermissionsV2Url string       `json:"permissions_v2_url" env_var:"PERMISSIONS_V2_URL"`
+	// OtelEndpoint is the OTLP collector traces are exported to. Empty means the
+	// in-cluster Jaeger the otelx default names, which is what every deployment uses;
+	// the knob exists so a local run can point somewhere else.
+	OtelEndpoint string `json:"otel_endpoint" env_var:"OTEL_ENDPOINT"`
 }
 
 func New(path string) (*Config, error) {

@@ -41,6 +41,16 @@ type Pipeline struct {
 	UpdatedAt          time.Time  `json:"updatedAt,omitempty"`
 	UserId             string     `json:"userId,omitempty"`
 	Operators          []Operator `json:"operators,omitempty"`
+	// Baggage is the OpenTelemetry context the caller that started this pipeline
+	// sent along, plus the pipeline's own id. The flow engine turns it into pod
+	// labels and hands it to every operator, so a log line from an operator can be
+	// traced back to, for example, the smart service instance it belongs to.
+	//
+	// Stored here rather than only applied at deploy time because a pipeline
+	// outlives the request that created it: the flow engine recreates missing
+	// deployments on startup and rebuilds them on every update, and would have
+	// nowhere to read the context back from.
+	Baggage map[string]string `json:"baggage,omitempty"`
 }
 
 type UpstreamConfig struct {

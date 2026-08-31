@@ -17,6 +17,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"maps"
@@ -56,13 +57,28 @@ func NewRegistry(repository db.PipelineRepository, perm permV2Client.Client) *Re
 	return &Registry{repository, perm}
 }
 
-func (r *Registry) ValidateOperatorPermissions() (err error) {
-	util.Logger.Debug("validate pipeline permissions")
-	resp, err := r.GetPipelinesAdmin("", nil)
+// writeContext keeps the values of ctx — the trace and the baggage — but drops its
+// cancellation.
+//
+// Every write here touches two stores that have to agree, mongo and permissions-v2,
+// and a cancellation landing between them leaves them disagreeing: a pipeline
+// without a permission resource reads back as forbidden, and a deleted one leaves an
+// orphan resource behind. ValidateOperatorPermissions repairs both at the next
+// start, but until then the pipeline is unusable to the user who just created it.
+//
+// Doing work nobody waits for any more is the cheaper failure. The read paths keep
+// the request's context.
+func writeContext(ctx context.Context) context.Context {
+	return context.WithoutCancel(ctx)
+}
+
+func (r *Registry) ValidateOperatorPermissions(ctx context.Context) (err error) {
+	util.Logger.DebugContext(ctx, "validate pipeline permissions")
+	resp, err := r.GetPipelinesAdmin(ctx, "", nil)
 	if err != nil {
 		return
 	}
-	permResources, err, _ := r.perm.ListResourcesWithAdminPermission(permV2Client.InternalAdminToken, PermV2InstanceTopic, permV2Client.ListOptions{})
+	permResources, err, _ := r.perm.ListResourcesWithAdminPermissionContext(ctx, permV2Client.InternalAdminToken, PermV2InstanceTopic, permV2Client.ListOptions{})
 	if err != nil {
 		return
 	}
@@ -87,7 +103,7 @@ func (r *Registry) ValidateOperatorPermissions() (err error) {
 		}
 		SetDefaultPermissions(pipeline, permissions)
 
-		_, err, _ = r.perm.SetPermission(permV2Client.InternalAdminToken, PermV2InstanceTopic, pipeline.Id, permissions)
+		_, err, _ = r.perm.SetPermissionContext(ctx, permV2Client.InternalAdminToken, PermV2InstanceTopic, pipeline.Id, permissions)
 		if err != nil {
 			return
 		}
@@ -96,11 +112,11 @@ func (r *Registry) ValidateOperatorPermissions() (err error) {
 
 	for permResouceId := range permResourceIds {
 		if !slices.Contains(dbIds, permResouceId) {
-			err, _ = r.perm.RemoveResource(permV2Client.InternalAdminToken, PermV2InstanceTopic, permResouceId)
+			err, _ = r.perm.RemoveResourceContext(ctx, permV2Client.InternalAdminToken, PermV2InstanceTopic, permResouceId)
 			if err != nil {
 				return
 			}
-			util.Logger.Debug(fmt.Sprintf("%s exists only in permissions-v2, now deleted", permResouceId))
+			util.Logger.DebugContext(ctx, fmt.Sprintf("%s exists only in permissions-v2, now deleted", permResouceId))
 		}
 	}
 	return
@@ -115,7 +131,8 @@ func SetDefaultPermissions(instance lib.Pipeline, permissions permV2Client.Resou
 	}
 }
 
-func (r *Registry) SavePipeline(pipeline lib.Pipeline, userId string) (id string, err error) {
+func (r *Registry) SavePipeline(ctx context.Context, pipeline lib.Pipeline, userId string) (id string, err error) {
+	ctx = writeContext(ctx)
 	// Create new uuid to use as pipeline id
 	uid := uuid.New()
 	id = uid.String()
@@ -123,7 +140,7 @@ func (r *Registry) SavePipeline(pipeline lib.Pipeline, userId string) (id string
 	pipeline.UserId = userId
 	pipeline.CreatedAt = time.Now()
 	pipeline.UpdatedAt = time.Now()
-	err = r.repository.InsertPipeline(pipeline)
+	err = r.repository.InsertPipeline(ctx, pipeline)
 	if err != nil {
 		return
 	}
@@ -133,12 +150,13 @@ func (r *Registry) SavePipeline(pipeline lib.Pipeline, userId string) (id string
 		RolePermissions:  map[string]permV2Model.PermissionsMap{},
 	}
 	SetDefaultPermissions(pipeline, permissions)
-	_, err, _ = r.perm.SetPermission(permV2Client.InternalAdminToken, PermV2InstanceTopic, pipeline.Id, permissions)
+	_, err, _ = r.perm.SetPermissionContext(ctx, permV2Client.InternalAdminToken, PermV2InstanceTopic, pipeline.Id, permissions)
 	return
 }
 
-func (r *Registry) UpdatePipeline(pipeline lib.Pipeline, userId string, auth string) (id string, err error) {
-	ok, err, _ := r.perm.CheckPermission(auth, PermV2InstanceTopic, pipeline.Id, permV2Client.Write)
+func (r *Registry) UpdatePipeline(ctx context.Context, pipeline lib.Pipeline, userId string, auth string) (id string, err error) {
+	ctx = writeContext(ctx)
+	ok, err, _ := r.perm.CheckPermissionContext(ctx, auth, PermV2InstanceTopic, pipeline.Id, permV2Client.Write)
 	if err != nil {
 		return
 	}
@@ -146,43 +164,43 @@ func (r *Registry) UpdatePipeline(pipeline lib.Pipeline, userId string, auth str
 		return id, lib.NewForbiddenError(errors.New(MessageMissingRights))
 	}
 
-	oldPipeline, err := r.repository.FindPipeline(pipeline.Id, userId)
+	oldPipeline, err := r.repository.FindPipeline(ctx, pipeline.Id, userId)
 	if err != nil {
 		return id, err
 	}
 	pipeline.CreatedAt = oldPipeline.CreatedAt
 	pipeline.UpdatedAt = time.Now()
 	pipeline.UserId = oldPipeline.UserId
-	err = r.repository.UpdatePipeline(pipeline, userId)
+	err = r.repository.UpdatePipeline(ctx, pipeline, userId)
 	if err != nil {
 		return id, err
 	}
 	return
 }
 
-func (r *Registry) GetPipelines(userId string, args map[string][]string, auth string) (pipelines lib.PipelinesResponse, err error) {
-	stringIds, err, _ := r.perm.ListAccessibleResourceIds(auth, PermV2InstanceTopic, permV2Client.ListOptions{}, permV2Client.Read)
-	return r.repository.All(userId, false, args, stringIds)
+func (r *Registry) GetPipelines(ctx context.Context, userId string, args map[string][]string, auth string) (pipelines lib.PipelinesResponse, err error) {
+	stringIds, err, _ := r.perm.ListAccessibleResourceIdsContext(ctx, auth, PermV2InstanceTopic, permV2Client.ListOptions{}, permV2Client.Read)
+	return r.repository.All(ctx, userId, false, args, stringIds)
 }
 
-func (r *Registry) GetPipelinesAdmin(userId string, args map[string][]string) (pipelines lib.PipelinesResponse, err error) {
-	return r.repository.All(userId, true, args, []string{})
+func (r *Registry) GetPipelinesAdmin(ctx context.Context, userId string, args map[string][]string) (pipelines lib.PipelinesResponse, err error) {
+	return r.repository.All(ctx, userId, true, args, []string{})
 }
 
-func (r *Registry) GetPipelineUserCount(userId string, args map[string][]string) (statistics []lib.PipelineUserCount, err error) {
-	return r.repository.PipelineUserCount(userId, true, args)
+func (r *Registry) GetPipelineUserCount(ctx context.Context, userId string, args map[string][]string) (statistics []lib.PipelineUserCount, err error) {
+	return r.repository.PipelineUserCount(ctx, userId, true, args)
 }
 
-func (r *Registry) GetOperatorUsage(userId string, args map[string][]string) (statistics []lib.OperatorUsage, err error) {
-	return r.repository.OperatorUsage(userId, true, args)
+func (r *Registry) GetOperatorUsage(ctx context.Context, userId string, args map[string][]string) (statistics []lib.OperatorUsage, err error) {
+	return r.repository.OperatorUsage(ctx, userId, true, args)
 }
 
-func (r *Registry) GetFlowUsage() (statistics []lib.FlowUsage, err error) {
-	return r.repository.FlowUsage("")
+func (r *Registry) GetFlowUsage(ctx context.Context) (statistics []lib.FlowUsage, err error) {
+	return r.repository.FlowUsage(ctx, "")
 }
 
-func (r *Registry) GetFlowUsageById(id string) (statistics *lib.FlowUsage, err error) {
-	resp, err := r.repository.FlowUsage(id)
+func (r *Registry) GetFlowUsageById(ctx context.Context, id string) (statistics *lib.FlowUsage, err error) {
+	resp, err := r.repository.FlowUsage(ctx, id)
 	if err != nil {
 		return
 	}
@@ -192,38 +210,40 @@ func (r *Registry) GetFlowUsageById(id string) (statistics *lib.FlowUsage, err e
 	return &resp[0], nil
 }
 
-func (r *Registry) DeletePipelineAdmin(id string, userId string) (err error) {
-	err = r.repository.DeletePipeline(id, userId, true)
+func (r *Registry) DeletePipelineAdmin(ctx context.Context, id string, userId string) (err error) {
+	ctx = writeContext(ctx)
+	err = r.repository.DeletePipeline(ctx, id, userId, true)
 	if err != nil {
 		return
 	}
-	err, _ = r.perm.RemoveResource(permV2Client.InternalAdminToken, PermV2InstanceTopic, id)
+	err, _ = r.perm.RemoveResourceContext(ctx, permV2Client.InternalAdminToken, PermV2InstanceTopic, id)
 	return err
 }
 
-func (r *Registry) GetPipeline(id string, userId string, auth string) (pipeline lib.Pipeline, err error) {
-	ok, err, _ := r.perm.CheckPermission(auth, PermV2InstanceTopic, id, permV2Client.Read)
+func (r *Registry) GetPipeline(ctx context.Context, id string, userId string, auth string) (pipeline lib.Pipeline, err error) {
+	ok, err, _ := r.perm.CheckPermissionContext(ctx, auth, PermV2InstanceTopic, id, permV2Client.Read)
 	if err != nil {
 		return
 	}
 	if !ok {
 		return pipeline, lib.NewForbiddenError(errors.New(MessageMissingRights))
 	}
-	return r.repository.FindPipeline(id, userId)
+	return r.repository.FindPipeline(ctx, id, userId)
 }
 
-func (r *Registry) DeletePipeline(id string, userId string, auth string) (err error) {
-	ok, err, _ := r.perm.CheckPermission(auth, PermV2InstanceTopic, id, permV2Client.Administrate)
+func (r *Registry) DeletePipeline(ctx context.Context, id string, userId string, auth string) (err error) {
+	ctx = writeContext(ctx)
+	ok, err, _ := r.perm.CheckPermissionContext(ctx, auth, PermV2InstanceTopic, id, permV2Client.Administrate)
 	if err != nil {
 		return
 	}
 	if !ok {
 		return lib.NewForbiddenError(errors.New(MessageMissingRights))
 	}
-	err = r.repository.DeletePipeline(id, userId, false)
+	err = r.repository.DeletePipeline(ctx, id, userId, false)
 	if err != nil {
 		return
 	}
-	err, _ = r.perm.RemoveResource(permV2Client.InternalAdminToken, PermV2InstanceTopic, id)
+	err, _ = r.perm.RemoveResourceContext(ctx, permV2Client.InternalAdminToken, PermV2InstanceTopic, id)
 	return
 }
