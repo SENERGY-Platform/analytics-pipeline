@@ -18,19 +18,23 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/config"
 	"github.com/SENERGY-Platform/analytics-pipeline/pkg/util"
 	"github.com/SENERGY-Platform/gin-middleware/otelx"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
 )
 
 var DB *mongo.Client
+
+// database is the name InitDB was configured with; Mongo() reads it.
+var database string
 
 // InitDB connects to mongo and instruments the connection.
 //
@@ -55,22 +59,67 @@ func InitDB(ctx context.Context, cfg *config.MongoConfig, serviceName, otelEndpo
 		return fmt.Errorf("failed to initialize OpenTelemetry: %w", err)
 	}
 
-	connectCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	client, err := mongo.Connect(connectCtx, options.Client().
-		ApplyURI("mongodb://"+cfg.Host+":"+strconv.FormatInt(int64(cfg.Port), 10)).
-		SetMonitor(otelmongo.NewMonitor()))
+	opts, err := clientOptions(cfg)
 	if err != nil {
-		return fmt.Errorf("failed to connect database: %w", err)
+		return err
 	}
-	util.Logger.InfoContext(ctx, "connected to db")
+	client, err := connect(ctx, opts.SetMonitor(otelmongo.NewMonitor()), cfg.Database, 10*time.Second)
+	if err != nil {
+		return err
+	}
+	util.Logger.InfoContext(ctx, "connected to db", "database", cfg.Database)
 	DB = client
+	database = cfg.Database
 	return nil
 }
 
+// connect runs an authenticated command on the service's database because
+// mongo.Connect is lazy and ping needs no auth: otherwise an unreachable server or
+// wrong or missing credentials would only show up at the first request.
+func connect(ctx context.Context, opts *options.ClientOptions, database string, timeout time.Duration) (*mongo.Client, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	client, err := mongo.Connect(ctx, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect database: %w", err)
+	}
+	_, err = client.Database(database).ListCollectionNames(ctx, bson.D{},
+		options.ListCollections().SetNameOnly(true).SetAuthorizedCollections(true))
+	if err != nil {
+		disconnectCtx, cancelDisconnect := context.WithTimeout(context.Background(), timeout)
+		defer cancelDisconnect()
+		_ = client.Disconnect(disconnectCtx)
+		return nil, fmt.Errorf("mongo startup check failed: %w", err)
+	}
+	return client, nil
+}
+
+// clientOptions turns the config into driver options without touching the network.
+func clientOptions(cfg *config.MongoConfig) (*options.ClientOptions, error) {
+	if cfg.Database == "" {
+		return nil, errors.New("mongo database name must not be empty")
+	}
+	opts := options.Client().ApplyURI(cfg.Url)
+	if cfg.User != "" {
+		// SCRAM, the only mechanism reachable here, cannot authenticate without a
+		// password; failing now beats every query failing later.
+		if cfg.Password.Value() == "" {
+			return nil, errors.New("mongo user is set but password is empty")
+		}
+		opts.SetAuth(options.Credential{
+			Username:   cfg.User,
+			Password:   cfg.Password.Value(),
+			AuthSource: cfg.AuthSource,
+		})
+	}
+	if err := opts.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid mongo client options: %w", err)
+	}
+	return opts, nil
+}
+
 func Mongo() *mongo.Collection {
-	return DB.Database("service").Collection("pipelines")
+	return DB.Database(database).Collection("pipelines")
 }
 
 func CloseDB() {

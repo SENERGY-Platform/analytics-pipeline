@@ -16,15 +16,21 @@
 
 package config
 
-import sb_config_hdl "github.com/SENERGY-Platform/go-service-base/config-hdl"
+import (
+	sb_config_hdl "github.com/SENERGY-Platform/go-service-base/config-hdl"
+	sb_config_types "github.com/SENERGY-Platform/go-service-base/config-hdl/types"
+)
 
 type LoggerConfig struct {
 	Level string `json:"level" env_var:"LOGGER_LEVEL"`
 }
 
 type MongoConfig struct {
-	Host string `json:"host" env_var:"MONGO"`
-	Port int    `json:"port" env_var:"MONGO_PORT"`
+	Url        string                 `json:"url" env_var:"MONGO_URL"`
+	User       string                 `json:"user" env_var:"MONGO_USER"`
+	Password   sb_config_types.Secret `json:"password" env_var:"MONGO_PASSWORD"`
+	AuthSource string                 `json:"auth_source" env_var:"MONGO_AUTH_SOURCE"`
+	Database   string                 `json:"database" env_var:"MONGO_DATABASE"`
 }
 type Config struct {
 	Logger           LoggerConfig `json:"logger" env_var:"LOGGER_CONFIG"`
@@ -48,8 +54,9 @@ func New(path string) (*Config, error) {
 		},
 		PermissionsV2Url: "http://permv2.permissions:8080",
 		Mongo: MongoConfig{
-			Host: "localhost",
-			Port: 27017,
+			Url:        "mongodb://localhost:27017",
+			AuthSource: "admin",
+			Database:   "analytics_pipeline",
 		},
 	}
 	err := sb_config_hdl.Load(&cfg, nil, envTypeParser, nil, path)
