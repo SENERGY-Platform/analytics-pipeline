@@ -370,7 +370,14 @@
             "type": "object",
             "properties": {
                 "aspectId": {
+                    "description": "deprecated: please use AspectIds",
                     "type": "string"
+                },
+                "aspectIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "characteristicIds": {
                     "type": "array",

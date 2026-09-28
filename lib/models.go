@@ -95,7 +95,8 @@ type Mapping struct {
 
 type InputSelection struct {
 	InputName         string   `json:"inputName,omitempty"` // references mapping name
-	AspectId          string   `json:"aspectId,omitempty"`
+	AspectId          string   `json:"aspectId,omitempty"`  //deprecated: please use AspectIds
+	AspectIds         []string `json:"aspectIds,omitempty"`
 	FunctionId        string   `json:"functionId,omitempty"`
 	CharacteristicIds []string `json:"characteristicIds,omitempty"`
 	SelectableId      string   `json:"selectableId,omitempty"` // either device or group. can be used for SNRGY-1172, needed to update devices in group
