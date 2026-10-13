@@ -71,6 +71,8 @@ func main() {
 		return
 	}
 	defer db.CloseDB()
+	// Before serving, so stored DSNs are gone before the first request; it never stops the start.
+	db.RemoveStoredTsConn(ctx, 30*time.Second)
 
 	var perm permV2Client.Client
 	if cfg.PermissionsV2Url == "mock" {

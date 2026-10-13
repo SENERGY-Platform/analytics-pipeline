@@ -46,6 +46,7 @@ type PipelineRepository interface {
 	OperatorPipelineUsage(ctx context.Context, operatorId string, imageId string, userId string) (usage lib.OperatorPipelineUsage, err error)
 }
 
+// MongoRepo drops ts_conn from operator configs on every write and every read, see withoutTsConn.
 type MongoRepo struct {
 }
 
@@ -54,7 +55,7 @@ func NewMongoRepo() *MongoRepo {
 }
 
 func (r *MongoRepo) InsertPipeline(ctx context.Context, pipeline lib.Pipeline) (err error) {
-	_, err = Mongo().InsertOne(ctx, pipeline)
+	_, err = Mongo().InsertOne(ctx, withoutTsConn(pipeline))
 	if err != nil {
 		return
 	}
@@ -62,7 +63,7 @@ func (r *MongoRepo) InsertPipeline(ctx context.Context, pipeline lib.Pipeline) (
 }
 
 func (r *MongoRepo) UpdatePipeline(ctx context.Context, pipeline lib.Pipeline, _ string) (err error) {
-	_, err = Mongo().ReplaceOne(ctx, bson.M{"id": pipeline.Id}, pipeline)
+	_, err = Mongo().ReplaceOne(ctx, bson.M{"id": pipeline.Id}, withoutTsConn(pipeline))
 
 	if err != nil {
 		return err
@@ -177,12 +178,16 @@ func (r *MongoRepo) All(ctx context.Context, userId string, admin bool, args map
 
 	pipelines.Data = make([]lib.Pipeline, 0)
 	err = cur.All(ctx, &pipelines.Data)
+	// Documents written before ts_conn was dropped on write may still carry it.
+	for i := range pipelines.Data {
+		pipelines.Data[i] = withoutTsConn(pipelines.Data[i])
+	}
 	return
 }
 
 func (r *MongoRepo) FindPipeline(ctx context.Context, id string, _ string) (pipeline lib.Pipeline, err error) {
 	err = Mongo().FindOne(ctx, bson.M{"id": id}).Decode(&pipeline)
-	return
+	return withoutTsConn(pipeline), err
 }
 
 func (r *MongoRepo) DeletePipeline(ctx context.Context, id string, userId string, admin bool) (err error) {
