@@ -45,7 +45,7 @@ func (c *Client) UpdatePipeline(token string, userId string, pipeline lib.Pipeli
 func (c *Client) GetPipelines(token string, userId string, limit int, offset int, order string, asc bool) (pipelines lib.PipelinesResponse, err error, code int) {
 	url := c.baseUrl + "/pipeline?limit=" + strconv.Itoa(limit) + "&offset=" + strconv.Itoa(offset)
 	if order != "" {
-		url += "order=" + order + "."
+		url += "&order=" + order + "."
 		if asc {
 			url += "asc"
 		} else {
@@ -59,7 +59,7 @@ func (c *Client) GetPipelines(token string, userId string, limit int, offset int
 func (c *Client) GetPipelinesAdmin(token string, userId string, limit int, offset int, order string, asc bool) (pipelines lib.PipelinesResponse, err error, code int) {
 	url := c.baseUrl + "/admin/pipeline?limit=" + strconv.Itoa(limit) + "&offset=" + strconv.Itoa(offset)
 	if order != "" {
-		url += "order=" + order + "."
+		url += "&order=" + order + "."
 		if asc {
 			url += "asc"
 		} else {
