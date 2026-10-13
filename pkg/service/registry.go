@@ -210,6 +210,12 @@ func (r *Registry) GetFlowUsageById(ctx context.Context, id string) (statistics 
 	return &resp[0], nil
 }
 
+// GetOperatorPipelineUsage counts across all users without a permission check, since
+// it names only pipelines that userId owns.
+func (r *Registry) GetOperatorPipelineUsage(ctx context.Context, operatorId string, imageId string, userId string) (usage lib.OperatorPipelineUsage, err error) {
+	return r.repository.OperatorPipelineUsage(ctx, operatorId, imageId, userId)
+}
+
 func (r *Registry) DeletePipelineAdmin(ctx context.Context, id string, userId string) (err error) {
 	ctx = writeContext(ctx)
 	err = r.repository.DeletePipeline(ctx, id, userId, true)

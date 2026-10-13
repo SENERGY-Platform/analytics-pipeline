@@ -250,6 +250,40 @@ func getFlowUsageById(registry service.Registry) (string, string, gin.HandlerFun
 	}
 }
 
+// getOperatorUsageById returns a handler function for the "/pipeline/statistics/operatorusage/:id" endpoint that checks if an operator is used by pipelines
+// @Summary Count the pipelines that run an operator
+// @Description Counts the pipelines of all users that run an operator, optionally only those running a given image of it, and lists the matching pipelines of the caller
+// @Tags pipelines
+// @Accept json
+// @Produce json
+// @Param id path string true "Operator ID"
+// @Param image query string false "Image ID; if given, it must not be empty"
+// @Success 200 {object} lib.OperatorPipelineUsage
+// @Failure 400 {string} MessageBadInput
+// @Failure 401
+// @Failure 500 {string} MessageSomethingWrong
+// @Router /pipeline/statistics/operatorusage/:id [get]
+// @Security Bearer
+func getOperatorUsageById(registry service.Registry) (string, string, gin.HandlerFunc) {
+	return http.MethodGet, "/pipeline/statistics/operatorusage/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		image, hasImage := c.GetQuery("image")
+		// An empty image would silently widen the check to every version of the operator.
+		if hasImage && image == "" {
+			util.Logger.ErrorContext(c.Request.Context(), "empty image parameter", "method", "GET", "path", "/pipeline/statistics/operatorusage/"+id)
+			_ = c.Error(lib.NewInputError(errors.New(MessageBadInput)))
+			return
+		}
+		usage, err := registry.GetOperatorPipelineUsage(c.Request.Context(), id, image, c.GetString(UserIdKey))
+		if err != nil {
+			util.Logger.ErrorContext(c.Request.Context(), "could not get getOperatorUsageById statistics", "error", err, "method", "GET", "path", "/pipeline/statistics/operatorusage/"+id)
+			_ = c.Error(handleError(err))
+			return
+		}
+		c.JSON(http.StatusOK, usage)
+	}
+}
+
 func deletePipelineAdmin(registry service.Registry) (string, string, gin.HandlerFunc) {
 	return http.MethodDelete, "/admin/pipeline/:id", func(c *gin.Context) {
 		id := c.Param("id")

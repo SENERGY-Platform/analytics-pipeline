@@ -17,6 +17,7 @@
 package db
 
 import (
+	"cmp"
 	"context"
 	"slices"
 	"strconv"
@@ -41,6 +42,8 @@ type PipelineRepository interface {
 	PipelineUserCount(ctx context.Context, userId string, admin bool, args map[string][]string) (statistics []lib.PipelineUserCount, err error)
 	OperatorUsage(ctx context.Context, userId string, admin bool, args map[string][]string) (statistics []lib.OperatorUsage, err error)
 	FlowUsage(ctx context.Context, id string) (statistics []lib.FlowUsage, err error)
+	// OperatorPipelineUsage matches imageId only when it is not empty.
+	OperatorPipelineUsage(ctx context.Context, operatorId string, imageId string, userId string) (usage lib.OperatorPipelineUsage, err error)
 }
 
 type MongoRepo struct {
@@ -287,6 +290,62 @@ func (r *MongoRepo) FlowUsage(ctx context.Context, id string) (statistics []lib.
 	return
 }
 
+// OperatorPipelineUsage runs as one aggregation so that the caller's pipelines are
+// taken from the same documents that were counted.
+func (r *MongoRepo) OperatorPipelineUsage(ctx context.Context, operatorId string, imageId string, userId string) (usage lib.OperatorPipelineUsage, err error) {
+	// Both conditions inside one $elemMatch: the image has to belong to the same
+	// operator entry, not to any other operator of the pipeline.
+	elem := bson.M{"operatorid": operatorId}
+	if imageId != "" {
+		elem["imageid"] = imageId
+	}
+	// An empty caller id must not list the pipelines that have no owner.
+	own := bson.M{"userid": userId}
+	if userId == "" {
+		own = bson.M{"_id": bson.M{"$exists": false}}
+	}
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"operators": bson.M{"$elemMatch": elem}}}},
+		{{Key: "$facet", Value: bson.M{
+			"count": bson.A{bson.M{"$count": "n"}},
+			"readable": bson.A{
+				bson.M{"$match": own},
+				bson.M{"$project": bson.M{"_id": 0, "id": 1, "name": 1}},
+			},
+		}}},
+	}
+
+	aggregate, err := Mongo().Aggregate(ctx, pipeline)
+	if err != nil {
+		return
+	}
+	defer func() {
+		_ = aggregate.Close(ctx)
+	}()
+
+	var result []struct {
+		Count []struct {
+			N int64 `bson:"n"`
+		} `bson:"count"`
+		Readable []lib.PipelineRef `bson:"readable"`
+	}
+	if err = aggregate.All(ctx, &result); err != nil {
+		return
+	}
+	usage.Readable = []lib.PipelineRef{}
+	// $facet always returns one document; $count inside it yields nothing for no match.
+	if len(result) == 1 {
+		if len(result[0].Count) == 1 {
+			usage.Pipelines = result[0].Count[0].N
+		}
+		usage.Readable = append(usage.Readable, result[0].Readable...)
+	}
+	slices.SortFunc(usage.Readable, func(a, b lib.PipelineRef) int {
+		return cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.Id, b.Id))
+	})
+	return
+}
+
 type MockRepo struct {
 }
 
@@ -323,4 +382,8 @@ func (r *MockRepo) OperatorUsage(_ context.Context, _ string, _ bool, _ map[stri
 
 func (r *MockRepo) FlowUsage(_ context.Context, id string) (statistics []lib.FlowUsage, err error) {
 	return
+}
+
+func (r *MockRepo) OperatorPipelineUsage(_ context.Context, _ string, _ string, _ string) (usage lib.OperatorPipelineUsage, err error) {
+	return lib.OperatorPipelineUsage{Readable: []lib.PipelineRef{}}, nil
 }

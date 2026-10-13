@@ -332,6 +332,64 @@
                     }
                 }
             }
+        },
+        "/pipeline/statistics/operatorusage/:id": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Counts the pipelines of all users that run an operator, optionally only those running a given image of it, and lists the matching pipelines of the caller",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pipelines"
+                ],
+                "summary": "Count the pipelines that run an operator",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Operator ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Image ID; if given, it must not be empty",
+                        "name": "image",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/lib.OperatorPipelineUsage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -488,6 +546,20 @@
                 }
             }
         },
+        "lib.OperatorPipelineUsage": {
+            "type": "object",
+            "properties": {
+                "pipelines": {
+                    "type": "integer"
+                },
+                "readable": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/lib.PipelineRef"
+                    }
+                }
+            }
+        },
         "lib.Pipeline": {
             "type": "object",
             "properties": {
@@ -539,6 +611,17 @@
                 },
                 "windowTime": {
                     "type": "integer"
+                }
+            }
+        },
+        "lib.PipelineRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },

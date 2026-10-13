@@ -122,3 +122,15 @@ type FlowUsage struct {
 	Count       int32    `json:"count,omitempty" bson:"count"`
 	PipelineIds []string `json:"pipelineIds,omitempty" bson:"pipelineIds"`
 }
+
+// OperatorPipelineUsage counts the pipelines of all users that run an operator but
+// names only the caller's own, so Readable is always a subset of what Pipelines counts.
+type OperatorPipelineUsage struct {
+	Pipelines int64         `json:"pipelines"`
+	Readable  []PipelineRef `json:"readable"`
+}
+
+type PipelineRef struct {
+	Id   string `json:"id" bson:"id"`
+	Name string `json:"name" bson:"name"`
+}

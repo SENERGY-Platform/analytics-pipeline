@@ -33,6 +33,7 @@ var routesAuth = gin_mw.Routes[service.Registry]{
 	deletePipeline,
 	getPipelines,
 	getFlowUsageById,
+	getOperatorUsageById,
 }
 
 var routesAdmin = gin_mw.Routes[service.Registry]{
