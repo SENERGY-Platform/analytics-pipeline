@@ -18,6 +18,7 @@ package api
 
 import (
 	"errors"
+	"log/slog"
 
 	"github.com/SENERGY-Platform/analytics-pipeline/lib"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -33,4 +34,14 @@ func handleError(err error) error {
 		err = lib.NewInternalError(errors.New(MessageSomethingWrong))
 	}
 	return err
+}
+
+// errorLevel is the log level of a failed request. A missing or foreign pipeline is the
+// caller's matter and logs as a warning, since every ERROR line alerts.
+func errorLevel(err error) slog.Level {
+	switch handleError(err).(type) {
+	case *lib.NotFoundError, *lib.ForbiddenError:
+		return slog.LevelWarn
+	}
+	return slog.LevelError
 }

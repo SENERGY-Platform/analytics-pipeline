@@ -110,7 +110,7 @@ func getPipeline(registry service.Registry) (string, string, gin.HandlerFunc) {
 		id := c.Param("id")
 		pipe, err := registry.GetPipeline(c.Request.Context(), id, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
 		if err != nil {
-			util.Logger.ErrorContext(c.Request.Context(), "could not get pipeline", "error", err, "method", "GET", "path", "/pipeline/"+id)
+			util.Logger.Log(c.Request.Context(), errorLevel(err), "could not get pipeline", "error", err, "method", "GET", "path", "/pipeline/"+id)
 			_ = c.Error(handleError(err))
 			return
 		}
@@ -137,7 +137,7 @@ func deletePipeline(registry service.Registry) (string, string, gin.HandlerFunc)
 		id := c.Param("id")
 		err := registry.DeletePipeline(c.Request.Context(), id, c.GetString(UserIdKey), c.GetHeader(HeaderAuthorization))
 		if err != nil {
-			util.Logger.ErrorContext(c.Request.Context(), "could not delete pipeline", "error", err, "method", "DELETE", "path", "/pipeline/"+id, "userId", c.GetString(UserIdKey))
+			util.Logger.Log(c.Request.Context(), errorLevel(err), "could not delete pipeline", "error", err, "method", "DELETE", "path", "/pipeline/"+id, "userId", c.GetString(UserIdKey))
 			_ = c.Error(handleError(err))
 			return
 		}
